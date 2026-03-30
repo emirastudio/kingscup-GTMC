@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type ChangeEvent } from "react";
+import { LangTabs, type Lang } from "@/components/admin/lang-tabs";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,6 +163,7 @@ function AccommodationTab() {
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | "new" | null>(null);
+  const [lang, setLang] = useState<Lang>("en");
 
   const emptyForm = {
     name: "",
@@ -282,25 +284,32 @@ function AccommodationTab() {
 
       {editId !== null && (
         <div className="p-6 border-b border-border bg-surface/40">
-          <p className="text-sm font-semibold text-text-primary mb-4">
-            {editId === "new" ? "Add option" : "Edit option"}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-text-primary">
+              {editId === "new" ? "Add option" : "Edit option"}
+            </p>
+            <LangTabs lang={lang} onChange={setLang} />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Input id="acc-name" label="Name" value={form.name}
-              onChange={(e) => setField("name", e.target.value)} />
-            <Input id="acc-nameRu" label="Name (RU)" value={form.nameRu}
-              onChange={(e) => setField("nameRu", e.target.value)} />
+            {lang === "en" ? (
+              <Input id="acc-name" label="Name" value={form.name}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setField("name", e.target.value)} />
+            ) : (
+              <Input id="acc-nameRu" label="Name" value={form.nameRu}
+                placeholder="Leave empty to use English"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setField("nameRu", e.target.value)} />
+            )}
             <Input id="acc-checkIn" label="Check-in" type="date" value={form.checkIn}
-              onChange={(e) => setField("checkIn", e.target.value)} />
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setField("checkIn", e.target.value)} />
             <Input id="acc-checkOut" label="Check-out" type="date" value={form.checkOut}
-              onChange={(e) => setField("checkOut", e.target.value)} />
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setField("checkOut", e.target.value)} />
             <Input id="acc-pricePlayer" label="Price/Player" type="number" step="0.01"
-              value={form.pricePerPlayer} onChange={(e) => setField("pricePerPlayer", e.target.value)} />
+              value={form.pricePerPlayer} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("pricePerPlayer", e.target.value)} />
             <Input id="acc-priceStaff" label="Price/Staff" type="number" step="0.01"
-              value={form.pricePerStaff} onChange={(e) => setField("pricePerStaff", e.target.value)} />
+              value={form.pricePerStaff} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("pricePerStaff", e.target.value)} />
             <Input id="acc-priceAccomp" label="Price/Accompanying" type="number" step="0.01"
               value={form.pricePerAccompanying}
-              onChange={(e) => setField("pricePerAccompanying", e.target.value)} />
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setField("pricePerAccompanying", e.target.value)} />
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-text-primary">
                 Meals included in package
@@ -313,10 +322,14 @@ function AccommodationTab() {
                 className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
               />
             </div>
-            <Input id="acc-mealNote" label="Meal note (EN)" value={form.mealNote}
-              onChange={(e) => setField("mealNote", e.target.value)} />
-            <Input id="acc-mealNoteRu" label="Meal note (RU)" value={form.mealNoteRu}
-              onChange={(e) => setField("mealNoteRu", e.target.value)} />
+            {lang === "en" ? (
+              <Input id="acc-mealNote" label="Meal note" value={form.mealNote}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setField("mealNote", e.target.value)} />
+            ) : (
+              <Input id="acc-mealNoteRu" label="Meal note" value={form.mealNoteRu}
+                placeholder="Leave empty to use English"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setField("mealNoteRu", e.target.value)} />
+            )}
           </div>
           <div className="mt-4 flex items-center gap-2">
             <Button onClick={saveForm} disabled={saving}>
@@ -398,6 +411,7 @@ function MealsTab() {
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | "new" | null>(null);
+  const [lang, setLang] = useState<Lang>("en");
 
   const emptyForm = { name: "", nameRu: "", description: "", descriptionRu: "", pricePerPerson: "", perDay: false };
   const [form, setForm] = useState(emptyForm);
@@ -486,14 +500,23 @@ function MealsTab() {
 
       {editId !== null && (
         <div className="p-6 border-b border-border bg-surface/40">
-          <p className="text-sm font-semibold text-text-primary mb-4">
-            {editId === "new" ? "Add option" : "Edit option"}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-text-primary">
+              {editId === "new" ? "Add option" : "Edit option"}
+            </p>
+            <LangTabs lang={lang} onChange={setLang} />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input id="meal-name" label="Name" value={form.name} onChange={(e) => setField("name", e.target.value)} />
-            <Input id="meal-nameRu" label="Name (RU)" value={form.nameRu} onChange={(e) => setField("nameRu", e.target.value)} />
-            <Input id="meal-desc" label="Description" value={form.description} onChange={(e) => setField("description", e.target.value)} />
-            <Input id="meal-descRu" label="Description (RU)" value={form.descriptionRu} onChange={(e) => setField("descriptionRu", e.target.value)} />
+            {lang === "en" ? (
+              <Input id="meal-name" label="Name" value={form.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("name", e.target.value)} />
+            ) : (
+              <Input id="meal-nameRu" label="Name" value={form.nameRu} placeholder="Leave empty to use English" onChange={(e: ChangeEvent<HTMLInputElement>) => setField("nameRu", e.target.value)} />
+            )}
+            {lang === "en" ? (
+              <Input id="meal-desc" label="Description" value={form.description} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("description", e.target.value)} />
+            ) : (
+              <Input id="meal-descRu" label="Description" value={form.descriptionRu} placeholder="Leave empty to use English" onChange={(e: ChangeEvent<HTMLInputElement>) => setField("descriptionRu", e.target.value)} />
+            )}
             <Input id="meal-price" label="Price/Person" type="number" step="0.01"
               value={form.pricePerPerson} onChange={(e) => setField("pricePerPerson", e.target.value)} />
             <div className="flex items-center gap-3 pt-6">
@@ -579,6 +602,7 @@ function TransfersTab() {
   const [error, setError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | "new" | null>(null);
+  const [lang, setLang] = useState<Lang>("en");
 
   const emptyForm = { name: "", nameRu: "", description: "", descriptionRu: "", pricePerPerson: "" };
   const [form, setForm] = useState(emptyForm);
@@ -667,14 +691,23 @@ function TransfersTab() {
 
       {editId !== null && (
         <div className="p-6 border-b border-border bg-surface/40">
-          <p className="text-sm font-semibold text-text-primary mb-4">
-            {editId === "new" ? "Add option" : "Edit option"}
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold text-text-primary">
+              {editId === "new" ? "Add option" : "Edit option"}
+            </p>
+            <LangTabs lang={lang} onChange={setLang} />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input id="tr-name" label="Name" value={form.name} onChange={(e) => setField("name", e.target.value)} />
-            <Input id="tr-nameRu" label="Name (RU)" value={form.nameRu} onChange={(e) => setField("nameRu", e.target.value)} />
-            <Input id="tr-desc" label="Description" value={form.description} onChange={(e) => setField("description", e.target.value)} />
-            <Input id="tr-descRu" label="Description (RU)" value={form.descriptionRu} onChange={(e) => setField("descriptionRu", e.target.value)} />
+            {lang === "en" ? (
+              <Input id="tr-name" label="Name" value={form.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("name", e.target.value)} />
+            ) : (
+              <Input id="tr-nameRu" label="Name" value={form.nameRu} placeholder="Leave empty to use English" onChange={(e: ChangeEvent<HTMLInputElement>) => setField("nameRu", e.target.value)} />
+            )}
+            {lang === "en" ? (
+              <Input id="tr-desc" label="Description" value={form.description} onChange={(e: ChangeEvent<HTMLInputElement>) => setField("description", e.target.value)} />
+            ) : (
+              <Input id="tr-descRu" label="Description" value={form.descriptionRu} placeholder="Leave empty to use English" onChange={(e: ChangeEvent<HTMLInputElement>) => setField("descriptionRu", e.target.value)} />
+            )}
             <Input id="tr-price" label="Price/Person" type="number" step="0.01"
               value={form.pricePerPerson} onChange={(e) => setField("pricePerPerson", e.target.value)} />
           </div>

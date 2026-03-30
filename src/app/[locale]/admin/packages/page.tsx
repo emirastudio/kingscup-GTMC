@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { LangTabs, type Lang } from "@/components/admin/lang-tabs";
+// no useTranslations — admin panel uses hardcoded English labels
 import { Input } from "@/components/ui/input";
 import {
   Layers,
@@ -98,8 +99,6 @@ function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () =>
 const EMPTY_FORM = { name: "", nameRu: "", description: "", isDefault: false };
 
 function PackagesTab() {
-  const t = useTranslations("admin.services");
-
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -108,6 +107,7 @@ function PackagesTab() {
   const [editId, setEditId] = useState<number | "new" | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [lang, setLang] = useState<Lang>("en");
 
   const loadPackages = useCallback(async () => {
     setLoading(true);
@@ -200,7 +200,7 @@ function PackagesTab() {
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
-          {t("packages")}
+          Packages
         </h2>
         <div className="flex items-center gap-3">
           <SavedBadge visible={saved} />
@@ -211,7 +211,7 @@ function PackagesTab() {
               size="sm"
             >
               <Plus className="w-4 h-4 mr-1.5" />
-              {t("createPackage")}
+              Create Package
             </Button>
           )}
         </div>
@@ -222,42 +222,35 @@ function PackagesTab() {
       {/* Create / Edit form */}
       {editId !== null && (
         <div className="rounded-xl border border-border bg-white shadow-sm p-5 space-y-4">
-          <h3 className="font-semibold text-base text-text-primary">
-            {editId === "new" ? t("createPackage") : t("editPackage")}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-text-secondary">
-                {t("name")} *
-              </label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="Standard Package"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-text-secondary">
-                {t("nameRu")}
-              </label>
-              <Input
-                value={form.nameRu}
-                onChange={(e) => setForm((f) => ({ ...f, nameRu: e.target.value }))}
-                placeholder="Стандартный пакет"
-              />
-            </div>
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-base text-text-primary">
+              {editId === "new" ? "Create Package" : "Edit Package"}
+            </h3>
+            <LangTabs lang={lang} onChange={setLang} />
           </div>
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-text-secondary">
-              {t("description")}
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              placeholder="Describe what's included…"
-              className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-navy/30 resize-none"
-            />
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-secondary">
+                Name {lang === "en" ? "*" : <span className="text-text-secondary/60">(RU — leave empty to use English)</span>}
+              </label>
+              <Input
+                value={lang === "en" ? form.name : form.nameRu}
+                onChange={(e) => setForm((f) => lang === "en" ? { ...f, name: e.target.value } : { ...f, nameRu: e.target.value })}
+                placeholder={lang === "en" ? "Standard Package" : "Стандартный пакет"}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-secondary">
+                Description {lang === "ru" && <span className="text-text-secondary/60">(leave empty to use English)</span>}
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={3}
+                placeholder={lang === "en" ? "Describe what's included…" : "Описание пакета…"}
+                className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-navy/30 resize-none"
+              />
+            </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
             <input
@@ -266,7 +259,7 @@ function PackagesTab() {
               checked={form.isDefault}
               onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
             />
-            <span className="text-sm font-medium text-text-primary">{t("default")}</span>
+            <span className="text-sm font-medium text-text-primary">Default package</span>
           </label>
           <div className="flex items-center gap-2 pt-1">
             <Button
@@ -280,7 +273,7 @@ function PackagesTab() {
               ) : (
                 <Check className="w-3.5 h-3.5 mr-1.5" />
               )}
-              {t("save")}
+              Save
             </Button>
             <Button variant="secondary" size="sm" onClick={cancelEdit} disabled={saving}>
               Cancel
@@ -298,7 +291,7 @@ function PackagesTab() {
       ) : packages.length === 0 ? (
         <div className="rounded-xl border border-border bg-white shadow-sm px-6 py-12 text-center">
           <Layers className="w-8 h-8 text-text-secondary/40 mx-auto mb-3" />
-          <p className="text-sm text-text-secondary">{t("noOptions")}</p>
+          <p className="text-sm text-text-secondary">No packages yet</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -312,7 +305,7 @@ function PackagesTab() {
                   <span className="font-semibold text-sm text-text-primary">{pkg.name}</span>
                   {pkg.isDefault && (
                     <span className="inline-flex items-center rounded-full bg-gold/15 px-2 py-0.5 text-xs font-semibold text-gold">
-                      {t("default")}
+                      Default
                     </span>
                   )}
                 </div>
@@ -325,7 +318,7 @@ function PackagesTab() {
               <div className="flex items-center gap-1.5 text-xs text-text-secondary">
                 <Users className="w-3.5 h-3.5" />
                 <span>
-                  {pkg.assignedTeams} {t("assignedTeams")}
+                  {pkg.assignedTeams} teams
                 </span>
               </div>
 
@@ -347,7 +340,7 @@ function PackagesTab() {
                       onClick={() => deletePackage(pkg.id)}
                       className="text-xs font-medium text-error cursor-pointer hover:underline"
                     >
-                      {t("confirmDelete")}
+                      Are you sure?
                     </button>
                     <button
                       type="button"
@@ -370,7 +363,7 @@ function PackagesTab() {
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-error transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ml-auto"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    {t("delete")}
+                    Delete
                   </button>
                 )}
               </div>
@@ -385,7 +378,6 @@ function PackagesTab() {
 /* ─────────────────────────────────────────── AssignmentsTab */
 
 function AssignmentsTab() {
-  const t = useTranslations("admin.services");
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -658,7 +650,7 @@ function AssignmentsTab() {
                                 disabled={isAssigning || isRemoving}
                                 className="appearance-none rounded-md border border-border bg-white pl-3 pr-8 py-1.5 text-xs font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-navy/30 cursor-pointer disabled:opacity-50 min-w-[140px]"
                               >
-                                <option value="">{t("assignPackage")}</option>
+                                <option value="">— Assign package —</option>
                                 {packages.map((pkg) => (
                                   <option key={pkg.id} value={String(pkg.id)}>
                                     {pkg.name}
@@ -686,7 +678,7 @@ function AssignmentsTab() {
                               ) : (
                                 <X className="w-3.5 h-3.5" />
                               )}
-                              {t("removePackage")}
+                              Remove
                             </button>
                           )}
                         </div>
@@ -706,7 +698,6 @@ function AssignmentsTab() {
 /* ─────────────────────────────────────────── Page */
 
 export default function PackagesPage() {
-  const t = useTranslations("admin.services");
   const [tab, setTab] = useState<Tab>("packages");
 
   return (
@@ -715,7 +706,7 @@ export default function PackagesPage() {
       <div>
         <h1 className="text-xl font-bold text-text-primary flex items-center gap-2.5">
           <Layers className="w-5 h-5 text-navy" />
-          {t("packages")}
+          Packages
         </h1>
         <p className="text-sm text-text-secondary mt-1">
           Manage service packages and assign them to teams
@@ -728,7 +719,7 @@ export default function PackagesPage() {
           active={tab === "packages"}
           onClick={() => setTab("packages")}
           icon={Layers}
-          label={t("packages")}
+          label="Packages"
         />
         <SectionTab
           active={tab === "assignments"}
