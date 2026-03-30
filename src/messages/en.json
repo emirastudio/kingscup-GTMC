@@ -199,6 +199,7 @@
     "noTransferOptions": "No transfer options available",
     "selfOrganized": "Self-organized / own transport",
     "perPerson": "per person",
+    "perTeam": "per team",
     "perDay": "Per day"
   },
   "economy": {

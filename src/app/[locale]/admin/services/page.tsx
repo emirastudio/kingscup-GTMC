@@ -708,7 +708,7 @@ function TransfersTab() {
             ) : (
               <Input id="tr-descRu" label="Description" value={form.descriptionRu} placeholder="Leave empty to use English" onChange={(e: ChangeEvent<HTMLInputElement>) => setField("descriptionRu", e.target.value)} />
             )}
-            <Input id="tr-price" label="Price/Person" type="number" step="0.01"
+            <Input id="tr-price" label="Price/Team" type="number" step="0.01"
               value={form.pricePerPerson} onChange={(e) => setField("pricePerPerson", e.target.value)} />
           </div>
           <div className="mt-4 flex items-center gap-2">
@@ -726,7 +726,7 @@ function TransfersTab() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border text-left">
-                {["Name", "Name (RU)", "Description", "Price/Person", ""].map((h, i) => (
+                {["Name", "Name (RU)", "Description", "Price/Team", ""].map((h, i) => (
                   <th key={i} className="px-4 py-3 text-xs font-medium text-text-secondary uppercase whitespace-nowrap">{h}</th>
                 ))}
               </tr>

@@ -315,7 +315,7 @@ export default function BookingPage() {
           // Transfer
           const xferRow = json.bookings.find((b) => b.bookingType === "transfer");
           if (xferRow) {
-            setTransfer({ optionId: xferRow.serviceId, persons: xferRow.quantity });
+            setTransfer({ optionId: xferRow.serviceId, persons: 1 });
           }
         }
       })
@@ -365,7 +365,7 @@ export default function BookingPage() {
     const price = parseFloat(
       effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides)
     );
-    return price * transfer.persons;
+    return price; // flat per-team price
   }, [data, transfer]);
 
   const registrationTotal = useCallback((): number => {
@@ -448,14 +448,14 @@ export default function BookingPage() {
       });
     }
 
-    // Transfer
-    if (transfer.optionId !== null && transfer.persons > 0) {
+    // Transfer — flat per-team price
+    if (transfer.optionId !== null) {
       const opt = data.transfers.find((tr) => tr.id === transfer.optionId);
       if (opt) {
         bookings.push({
           bookingType: "transfer",
           serviceId: opt.id,
-          quantity: transfer.persons,
+          quantity: 1,
           unitPrice: effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides),
         });
       }
@@ -913,31 +913,11 @@ export default function BookingPage() {
                                 <p className="text-sm font-semibold text-navy">
                                   {fmtPrice(price)}
                                 </p>
-                                <p className="text-xs text-text-secondary">{t("perPerson")}</p>
+                                <p className="text-xs text-text-secondary">{t("perTeam")}</p>
                               </div>
                             )}
                           </div>
                         </div>
-
-                        {selected && !isFree && (
-                          <div
-                            className="border-t border-navy/10 p-4 space-y-3"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <QtyInput
-                              label={t("persons")}
-                              value={transfer.persons}
-                              min={0}
-                              onChange={(v) => setTransfer((prev) => ({ ...prev, persons: v }))}
-                            />
-                            {xferTotal > 0 && (
-                              <div className="pt-2 border-t border-border flex justify-between text-sm font-medium">
-                                <span className="text-text-secondary">{t("subtotal")}</span>
-                                <span className="text-navy">{fmtPrice(xferTotal)}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     );
                   })}

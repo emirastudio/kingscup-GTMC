@@ -199,6 +199,7 @@
     "noTransferOptions": "Варианты трансфера недоступны",
     "selfOrganized": "Самостоятельно / свой транспорт",
     "perPerson": "с человека",
+    "perTeam": "за команду",
     "perDay": "В день"
   },
   "economy": {
