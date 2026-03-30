@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useTeam } from "@/lib/team-context";
-import { ChevronDown, Check, Users } from "lucide-react";
+import { ChevronDown, Check, Users, Plus, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type TeamSummary = {
   id: number;
@@ -16,10 +17,17 @@ type TeamSummary = {
   staffCount: number;
 };
 
+type ClassOption = {
+  id: number;
+  name: string;
+};
+
 interface TeamSwitcherProps {
   clubName: string;
   clubBadgeUrl: string | null;
+  clubId: number;
   teams: TeamSummary[];
+  classes: ClassOption[];
 }
 
 const statusDot: Record<string, string> = {
@@ -29,11 +37,16 @@ const statusDot: Record<string, string> = {
   cancelled: "bg-red-400",
 };
 
-export function TeamSwitcher({ clubName, clubBadgeUrl, teams }: TeamSwitcherProps) {
+export function TeamSwitcher({ clubName, clubBadgeUrl, clubId, teams, classes }: TeamSwitcherProps) {
   const t = useTranslations("team");
   const { teamId, setTeamId } = useTeam();
   const [open, setOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamClassId, setNewTeamClassId] = useState("");
+  const [adding, setAdding] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const activeTeam = teams.find((tm) => tm.id === teamId) ?? teams[0];
 
@@ -53,6 +66,28 @@ export function TeamSwitcher({ clubName, clubBadgeUrl, teams }: TeamSwitcherProp
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  async function handleAddTeam() {
+    if (!newTeamName.trim() || !newTeamClassId) return;
+    setAdding(true);
+    try {
+      const res = await fetch(`/api/clubs/${clubId}/teams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newTeamName.trim(), classId: newTeamClassId }),
+      });
+      if (res.ok) {
+        const team = await res.json();
+        setTeamId(team.id);
+        setShowAddModal(false);
+        setNewTeamName("");
+        setNewTeamClassId("");
+        router.refresh();
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -105,7 +140,7 @@ export function TeamSwitcher({ clubName, clubBadgeUrl, teams }: TeamSwitcherProp
           </button>
 
           {/* Dropdown */}
-          {open && teams.length > 1 && (
+          {open && (
             <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white rounded-xl border border-border shadow-lg overflow-hidden">
               {teams.map((team) => (
                 <button
@@ -126,8 +161,77 @@ export function TeamSwitcher({ clubName, clubBadgeUrl, teams }: TeamSwitcherProp
                   )}
                 </button>
               ))}
+              {/* Add team button */}
+              <button
+                onClick={() => { setOpen(false); setShowAddModal(true); }}
+                className="w-full text-left flex items-center gap-2 px-3 py-2.5 hover:bg-surface transition-colors text-navy border-t border-border"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="text-[13px] font-medium">{t("addTeam")}</span>
+              </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* No teams - just show add button */}
+      {!activeTeam && (
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-navy/30 px-3 py-3 text-navy hover:bg-navy/5 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="text-[13px] font-medium">{t("addTeam")}</span>
+        </button>
+      )}
+
+      {/* Add Team Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-text-primary">{t("addTeam")}</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-surface rounded-lg">
+                <X className="w-4 h-4 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[12px] font-medium text-text-secondary mb-1 block">{t("teamName")}</label>
+                <input
+                  type="text"
+                  value={newTeamName}
+                  onChange={e => setNewTeamName(e.target.value)}
+                  placeholder={`${clubName} U12`}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-[12px] font-medium text-text-secondary mb-1 block">{t("class")}</label>
+                <select
+                  value={newTeamClassId}
+                  onChange={e => setNewTeamClassId(e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy bg-white"
+                >
+                  <option value="">{t("selectClass")}</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={handleAddTeam}
+                disabled={!newTeamName.trim() || !newTeamClassId || adding}
+                className="w-full mt-2 rounded-lg bg-navy text-white py-2.5 text-sm font-medium hover:bg-navy/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {adding ? "..." : t("addTeam")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

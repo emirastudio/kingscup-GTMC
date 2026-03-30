@@ -67,7 +67,10 @@
     "confirmed": "Confirmed",
     "cancelled": "Cancelled",
     "uploadBadge": "Upload club badge",
-    "badgeHint": "PNG format, 500×500px, transparent background"
+    "badgeHint": "PNG format, 500×500px, transparent background",
+    "addTeam": "Add team",
+    "selectClass": "Select class",
+    "teamAdded": "Team added"
   },
   "people": {
     "firstName": "First name",

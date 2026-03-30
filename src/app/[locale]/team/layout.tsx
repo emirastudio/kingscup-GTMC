@@ -4,7 +4,7 @@ import { TeamSwitcher } from "@/components/club/team-switcher";
 import { TeamProvider } from "@/lib/team-context";
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
-import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads } from "@/db/schema";
+import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads, tournaments } from "@/db/schema";
 import { eq, and, count, sql, notInArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -20,6 +20,12 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   });
 
   if (!club) redirect("/en/login");
+
+  // Get tournament classes for "add team" modal
+  const classes = await db.query.tournamentClasses.findMany({
+    where: eq(tournamentClasses.tournamentId, club.tournamentId),
+    orderBy: (c, { asc }) => [asc(c.minBirthYear)],
+  });
 
   // Get all teams for this club
   const clubTeams = await db.query.teams.findMany({
@@ -95,7 +101,9 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
               <TeamSwitcher
                 clubName={club.name}
                 clubBadgeUrl={club.badgeUrl ?? null}
+                clubId={club.id}
                 teams={enrichedTeams}
+                classes={classes.map(c => ({ id: c.id, name: c.name }))}
               />
             </div>
             <div className="p-3 flex-1">

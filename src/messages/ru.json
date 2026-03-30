@@ -67,7 +67,10 @@
     "confirmed": "Подтверждена",
     "cancelled": "Отменена",
     "uploadBadge": "Загрузить эмблему клуба",
-    "badgeHint": "Формат PNG, 500×500px, прозрачный фон"
+    "badgeHint": "Формат PNG, 500×500px, прозрачный фон",
+    "addTeam": "Добавить команду",
+    "selectClass": "Выберите класс",
+    "teamAdded": "Команда добавлена"
   },
   "people": {
     "firstName": "Имя",

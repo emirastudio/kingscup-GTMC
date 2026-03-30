@@ -67,7 +67,10 @@
     "confirmed": "Kinnitatud",
     "cancelled": "Tühistatud",
     "uploadBadge": "Lae üles klubi embleem",
-    "badgeHint": "PNG formaat, 500×500px, läbipaistev taust"
+    "badgeHint": "PNG formaat, 500×500px, läbipaistev taust",
+    "addTeam": "Lisa meeskond",
+    "selectClass": "Vali klass",
+    "teamAdded": "Meeskond lisatud"
   },
   "people": {
     "firstName": "Eesnimi",
