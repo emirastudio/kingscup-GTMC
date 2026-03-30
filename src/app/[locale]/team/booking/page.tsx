@@ -246,6 +246,7 @@ function QtyInput({
 
 export default function BookingPage() {
   const t = useTranslations("booking");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const { teamId } = useTeam();
 
@@ -475,7 +476,7 @@ export default function BookingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48 text-text-secondary text-sm">
-        {useTranslations("common")("loading")}
+        {tc("loading")}
       </div>
     );
   }
