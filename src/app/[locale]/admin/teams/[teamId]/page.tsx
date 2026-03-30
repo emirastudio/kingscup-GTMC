@@ -29,7 +29,7 @@ interface TeamReport {
   } | null;
   class: { id: number; name: string; minBirthYear: number | null; maxBirthYear: number | null } | null;
   people: { all: Person[]; counts: { players: number; staff: number; accompanying: number; total: number } };
-  package: { id: number; name: string; assignedAt: string; isPublished: boolean } | null;
+  package: { id: number; name: string; assignedAt: string; isPublished: boolean; accommodationOptionId: number | null } | null;
   bookings: Booking[];
   overrides: Override[];
   finance: { totalFromBookings: number; totalPaid: number; balance: number };
@@ -80,10 +80,14 @@ interface TournamentInfo {
 }
 
 interface Services {
-  accommodation: { id: number; name: string; checkIn: string | null; checkOut: string | null }[];
-  meals: { id: number; name: string }[];
-  transfers: { id: number; name: string }[];
-  registration: { id: number; name: string }[];
+  accommodation: {
+    id: number; name: string; checkIn: string | null; checkOut: string | null;
+    pricePerPlayer: string; pricePerStaff: string; pricePerAccompanying: string;
+    includedMeals: number; mealNote: string | null;
+  }[];
+  meals: { id: number; name: string; pricePerPerson: string; perDay: boolean; description: string | null }[];
+  transfers: { id: number; name: string; pricePerPerson: string; description: string | null }[];
+  registration: { id: number; name: string; price: string; isRequired: boolean }[];
 }
 
 interface ServicePackage { id: number; name: string; isDefault: boolean }
@@ -227,6 +231,351 @@ function MedicalBadge({ allergies, dietary, medical }: {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
+// ─── PackagePricingCard ───────────────────────────────────────────────────────
+
+interface PackagePricingCardProps {
+  pkg: TeamReport["package"];
+  packages: ServicePackage[];
+  services: Services;
+  overrides: Override[];
+  selectedPackageId: string;
+  assigningPackage: boolean;
+  togglingPublish: boolean;
+  teamId: string;
+  onAssign: () => void;
+  onRemove: () => void;
+  onTogglePublish: () => void;
+  onSelectPackage: (id: string) => void;
+  onRefresh: () => void;
+}
+
+function PackagePricingCard({
+  pkg, packages, services, overrides,
+  selectedPackageId, assigningPackage, togglingPublish,
+  teamId, onAssign, onRemove, onTogglePublish, onSelectPackage, onRefresh,
+}: PackagePricingCardProps) {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingKey && inputRef.current) inputRef.current.focus();
+  }, [editingKey]);
+
+  function startEdit(key: string, currentPrice: string) {
+    setEditingKey(key);
+    setEditValue(currentPrice.replace("€", ""));
+  }
+
+  async function commitEdit(
+    serviceType: "accommodation" | "meal" | "transfer" | "registration",
+    serviceId: number,
+    basePrice: number,
+  ) {
+    const existing = overrides.find(
+      (o) => o.serviceType === serviceType && o.serviceId === serviceId
+    );
+    const newVal = parseFloat(editValue);
+    setEditingKey(null);
+
+    if (isNaN(newVal)) return;
+
+    const key = `${serviceType}-${serviceId}`;
+    setSavingKey(key);
+
+    try {
+      // If same as base → remove override (restore default)
+      if (Math.abs(newVal - basePrice) < 0.001) {
+        if (existing) {
+          await fetch(`/api/admin/teams/${teamId}/overrides?id=${existing.id}`, { method: "DELETE" });
+        }
+      } else {
+        // Delete old override first (if exists)
+        if (existing) {
+          await fetch(`/api/admin/teams/${teamId}/overrides?id=${existing.id}`, { method: "DELETE" });
+        }
+        // Create new override
+        await fetch(`/api/admin/teams/${teamId}/overrides`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceType, serviceId, customPrice: newVal }),
+        });
+      }
+      await onRefresh();
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  function handleKeyDown(
+    e: React.KeyboardEvent,
+    serviceType: "accommodation" | "meal" | "transfer" | "registration",
+    serviceId: number,
+    basePrice: number,
+  ) {
+    if (e.key === "Enter") commitEdit(serviceType, serviceId, basePrice);
+    if (e.key === "Escape") setEditingKey(null);
+  }
+
+  function getOverride(serviceType: string, serviceId: number): Override | null {
+    return overrides.find((o) => o.serviceType === serviceType && o.serviceId === serviceId) ?? null;
+  }
+
+  function effectivePrice(serviceType: string, serviceId: number, basePrice: number): number {
+    const ov = getOverride(serviceType, serviceId);
+    if (ov?.customPrice) return parseFloat(ov.customPrice);
+    return basePrice;
+  }
+
+  function PriceCell({
+    rowKey, serviceType, serviceId, basePrice, unitLabel,
+  }: {
+    rowKey: string;
+    serviceType: "accommodation" | "meal" | "transfer" | "registration";
+    serviceId: number;
+    basePrice: number;
+    unitLabel?: string;
+  }) {
+    const ov = getOverride(serviceType, serviceId);
+    const effPrice = effectivePrice(serviceType, serviceId, basePrice);
+    const isEditing = editingKey === rowKey;
+    const isSaving = savingKey === rowKey;
+    const isCustom = !!ov?.customPrice;
+
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-text-secondary text-sm">€</span>
+          <input
+            ref={inputRef}
+            type="number"
+            step="0.01"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => commitEdit(serviceType, serviceId, basePrice)}
+            onKeyDown={(e) => handleKeyDown(e, serviceType, serviceId, basePrice)}
+            className="w-24 rounded-lg border-2 border-navy px-2 py-1 text-sm font-semibold text-navy focus:outline-none tabular-nums"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2 group">
+        <button
+          onClick={() => startEdit(rowKey, fmtEuro(effPrice))}
+          disabled={isSaving}
+          className={`text-sm font-semibold tabular-nums rounded-lg px-2.5 py-1 border transition-all cursor-pointer ${
+            isCustom
+              ? "bg-navy/5 text-navy border-navy/30 hover:bg-navy/10"
+              : "bg-transparent text-text-primary border-transparent hover:bg-surface hover:border-border"
+          } disabled:opacity-50`}
+        >
+          {isSaving ? "…" : fmtEuro(effPrice)}
+        </button>
+        {isCustom && (
+          <span className="text-xs text-text-secondary line-through opacity-60 hidden group-hover:inline">
+            {fmtEuro(basePrice)}
+          </span>
+        )}
+        {unitLabel && !isEditing && (
+          <span className="text-xs text-text-secondary hidden group-hover:inline">{unitLabel}</span>
+        )}
+      </div>
+    );
+  }
+
+  // Build which accommodation to show (package-linked or all)
+  const accomList = pkg?.accommodationOptionId
+    ? services.accommodation.filter((a) => a.id === pkg.accommodationOptionId)
+    : services.accommodation;
+
+  function fmtDateShort(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return `${d.getDate()} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]}`;
+  }
+
+  return (
+    <Card>
+      {/* Header */}
+      <CardHeader>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle>Package & Pricing</CardTitle>
+          {pkg && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onTogglePublish}
+                disabled={togglingPublish}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors cursor-pointer disabled:opacity-50 ${
+                  pkg.isPublished
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                    : "bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100"
+                }`}
+              >
+                {pkg.isPublished
+                  ? <><Eye className="w-3.5 h-3.5" />Published</>
+                  : <><EyeOff className="w-3.5 h-3.5" />Hidden</>}
+              </button>
+              <Button variant="danger" size="sm" onClick={onRemove} disabled={assigningPackage}>Remove</Button>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+
+      {/* Assign selector */}
+      <div className="flex gap-2 mb-5">
+        <select
+          value={selectedPackageId}
+          onChange={(e) => onSelectPackage(e.target.value)}
+          className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy appearance-none cursor-pointer"
+        >
+          <option value="">{pkg ? "Change package..." : "Assign package..."}</option>
+          {packages.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}{p.isDefault ? " (default)" : ""}</option>
+          ))}
+        </select>
+        <Button onClick={onAssign} disabled={!selectedPackageId || assigningPackage} size="sm">
+          {assigningPackage ? "..." : pkg ? "Change" : "Assign"}
+        </Button>
+      </div>
+
+      {!pkg ? (
+        <div className="rounded-lg border border-dashed border-border p-4 text-center">
+          <p className="text-sm text-text-secondary">No package assigned — team cannot open booking page</p>
+        </div>
+      ) : (
+        <>
+          {/* Pricing table */}
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left pb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">Service</th>
+                <th className="text-left pb-2 text-xs font-medium text-text-secondary uppercase tracking-wide">Conditions</th>
+                <th className="text-right pb-2 text-xs font-medium text-text-secondary uppercase tracking-wide pr-1">Price</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+
+              {/* Registration */}
+              {services.registration.map((r) => {
+                const ov = getOverride("registration", r.id);
+                return (
+                  <tr key={`reg-${r.id}`} className={`${ov?.isDisabled ? "opacity-40" : ""}`}>
+                    <td className="py-2.5 pr-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+                        <span className="text-sm font-medium text-text-primary">{r.name}</span>
+                        {r.isRequired && <span className="text-xs text-text-secondary bg-surface border border-border rounded px-1.5">req.</span>}
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-text-secondary">1 × per team</td>
+                    <td className="py-2.5 text-right">
+                      <PriceCell rowKey={`registration-${r.id}`} serviceType="registration" serviceId={r.id} basePrice={parseFloat(r.price)} />
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Accommodation */}
+              {accomList.map((a) => {
+                const ov = getOverride("accommodation", a.id);
+                const dateRange = (a.checkIn && a.checkOut)
+                  ? `${fmtDateShort(a.checkIn)} – ${fmtDateShort(a.checkOut)}`
+                  : "";
+                return (
+                  <tr key={`accom-${a.id}`} className={`${ov?.isDisabled ? "opacity-40" : ""}`}>
+                    <td className="py-2.5 pr-3">
+                      <div className="flex items-center gap-2">
+                        <Hotel className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+                        <span className="text-sm font-medium text-text-primary">{a.name}</span>
+                        {a.includedMeals > 0 && (
+                          <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 rounded px-1.5">{a.includedMeals} meals</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <div className="text-xs text-text-secondary space-y-0.5">
+                        {dateRange && <div>{dateRange}</div>}
+                        <div>
+                          Players {fmtEuro(parseFloat(a.pricePerPlayer))}
+                          {" · "}Staff {fmtEuro(parseFloat(a.pricePerStaff))}
+                          {parseFloat(a.pricePerAccompanying) > 0 && ` · Accomp. ${fmtEuro(parseFloat(a.pricePerAccompanying))}`}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <PriceCell
+                        rowKey={`accommodation-${a.id}`}
+                        serviceType="accommodation"
+                        serviceId={a.id}
+                        basePrice={parseFloat(a.pricePerPlayer)}
+                        unitLabel="per person"
+                      />
+                      {ov?.customPrice && (
+                        <div className="text-xs text-text-secondary text-right mt-0.5">all types</div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Transfers */}
+              {services.transfers.map((t) => {
+                const ov = getOverride("transfer", t.id);
+                return (
+                  <tr key={`tr-${t.id}`} className={`${ov?.isDisabled ? "opacity-40" : ""}`}>
+                    <td className="py-2.5 pr-3">
+                      <div className="flex items-center gap-2">
+                        <Car className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+                        <span className="text-sm font-medium text-text-primary">{t.name}</span>
+                      </div>
+                      {t.description && <div className="text-xs text-text-secondary mt-0.5 ml-5">{t.description}</div>}
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-text-secondary">Per team</td>
+                    <td className="py-2.5 text-right">
+                      <PriceCell rowKey={`transfer-${t.id}`} serviceType="transfer" serviceId={t.id} basePrice={parseFloat(t.pricePerPerson)} />
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Extra meals */}
+              {services.meals.map((m) => {
+                const ov = getOverride("meal", m.id);
+                return (
+                  <tr key={`meal-${m.id}`} className={`${ov?.isDisabled ? "opacity-40" : ""}`}>
+                    <td className="py-2.5 pr-3">
+                      <div className="flex items-center gap-2">
+                        <Utensils className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+                        <span className="text-sm font-medium text-text-primary">{m.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-text-secondary">
+                      {m.perDay ? "Per person / day" : "Per person"}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <PriceCell rowKey={`meal-${m.id}`} serviceType="meal" serviceId={m.id} basePrice={parseFloat(m.pricePerPerson)} />
+                    </td>
+                  </tr>
+                );
+              })}
+
+            </tbody>
+          </table>
+
+          <p className="text-xs text-text-secondary mt-3 italic">
+            Click any price to edit. Press Enter to save, Esc to cancel. Base price restores on clear.
+          </p>
+        </>
+      )}
+    </Card>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export default function AdminTeamDetailPage() {
   const params = useParams();
   const teamId = params.teamId as string;
@@ -251,14 +600,6 @@ export default function AdminTeamDetailPage() {
   const [assigningPackage, setAssigningPackage] = useState(false);
   const [togglingPublish, setTogglingPublish] = useState(false);
 
-  // Overrides
-  const [showAddOverride, setShowAddOverride] = useState(false);
-  const [overrideType, setOverrideType] = useState("accommodation");
-  const [overrideServiceId, setOverrideServiceId] = useState("");
-  const [overrideCustomPrice, setOverrideCustomPrice] = useState("");
-  const [overrideIsDisabled, setOverrideIsDisabled] = useState(false);
-  const [overrideReason, setOverrideReason] = useState("");
-  const [savingOverride, setSavingOverride] = useState(false);
 
   // Section toggles
   const [showPlayers, setShowPlayers] = useState(true);
@@ -362,35 +703,6 @@ export default function AdminTeamDetailPage() {
       });
       if (res.ok) await fetchReport();
     } finally { setTogglingPublish(false); }
-  }
-
-  async function handleAddOverride(e: React.FormEvent) {
-    e.preventDefault();
-    if (!overrideType || !overrideServiceId) return;
-    setSavingOverride(true);
-    try {
-      const res = await fetch(`/api/admin/teams/${teamId}/overrides`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          serviceType: overrideType,
-          serviceId: Number(overrideServiceId),
-          customPrice: overrideCustomPrice ? Number(overrideCustomPrice) : undefined,
-          isDisabled: overrideIsDisabled,
-          reason: overrideReason || undefined,
-        }),
-      });
-      if (res.ok) {
-        setShowAddOverride(false);
-        setOverrideType("accommodation"); setOverrideServiceId("");
-        setOverrideCustomPrice(""); setOverrideIsDisabled(false); setOverrideReason("");
-        await fetchReport();
-      }
-    } finally { setSavingOverride(false); }
-  }
-
-  async function handleRemoveOverride(id: number) {
-    await fetch(`/api/admin/teams/${teamId}/overrides?id=${id}`, { method: "DELETE" });
-    await fetchReport();
   }
 
   async function handleAddPayment(e: React.FormEvent) {
@@ -773,155 +1085,21 @@ export default function AdminTeamDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Package & Pricing */}
-        <Card>
-          <CardHeader><CardTitle>Package & Pricing</CardTitle></CardHeader>
-
-          {/* Current package + publish toggle */}
-          <div className="mb-5">
-            {report.package ? (
-              <div className="rounded-xl border-2 border-border overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 bg-surface/50">
-                  <div>
-                    <p className="font-semibold text-text-primary">{report.package.name}</p>
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      Assigned {fmtDate(report.package.assignedAt)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Publish toggle */}
-                    <button
-                      onClick={handleTogglePublish}
-                      disabled={togglingPublish}
-                      className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors cursor-pointer disabled:opacity-50 ${
-                        report.package.isPublished
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
-                          : "bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100"
-                      }`}
-                    >
-                      {report.package.isPublished
-                        ? <><Eye className="w-3.5 h-3.5" /> Published</>
-                        : <><EyeOff className="w-3.5 h-3.5" /> Hidden</>}
-                    </button>
-                    <Button variant="danger" size="sm" onClick={handleRemovePackage} disabled={assigningPackage}>
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-border p-4 text-center">
-                <p className="text-sm text-text-secondary">No package assigned — team cannot see booking page</p>
-              </div>
-            )}
-          </div>
-
-          {/* Assign / change */}
-          <div className="mb-5">
-            <label className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">
-              {report.package ? "Change Package" : "Assign Package"}
-            </label>
-            <div className="flex gap-2">
-              <select value={selectedPackageId} onChange={(e) => setSelectedPackageId(e.target.value)}
-                className="flex-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy appearance-none cursor-pointer">
-                <option value="">Select package...</option>
-                {packages.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.name}{pkg.isDefault ? " (default)" : ""}
-                  </option>
-                ))}
-              </select>
-              <Button onClick={handleAssignPackage} disabled={!selectedPackageId || assigningPackage} size="sm">
-                {assigningPackage ? "..." : "Assign"}
-              </Button>
-            </div>
-          </div>
-
-          {/* Price overrides */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-text-primary">Custom Pricing</h4>
-              <Button variant="secondary" size="sm" onClick={() => setShowAddOverride(!showAddOverride)}>
-                <Plus className="w-3.5 h-3.5" /> Add override
-              </Button>
-            </div>
-
-            {showAddOverride && (
-              <form onSubmit={handleAddOverride}
-                className="mb-4 p-3 rounded-lg border border-navy/20 bg-navy/3 space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Service type</label>
-                    <select value={overrideType} onChange={(e) => { setOverrideType(e.target.value); setOverrideServiceId(""); }}
-                      className="w-full rounded-lg border border-border bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20">
-                      <option value="accommodation">Accommodation</option>
-                      <option value="meal">Meal</option>
-                      <option value="transfer">Transfer</option>
-                      <option value="registration">Registration</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Specific service</label>
-                    <select value={overrideServiceId} onChange={(e) => setOverrideServiceId(e.target.value)} required
-                      className="w-full rounded-lg border border-border bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20">
-                      <option value="">Select...</option>
-                      {getServiceOptions(overrideType).map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input label="Custom price (€)" type="number" step="0.01"
-                    value={overrideCustomPrice}
-                    onChange={(e) => setOverrideCustomPrice(e.target.value)}
-                    placeholder="Leave blank to keep original" />
-                  <Input label="Reason" value={overrideReason}
-                    onChange={(e) => setOverrideReason(e.target.value)}
-                    placeholder="e.g. Partner club" />
-                </div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" checked={overrideIsDisabled}
-                    onChange={(e) => setOverrideIsDisabled(e.target.checked)}
-                    className="rounded border-border" />
-                  <span className="text-text-secondary">Disable this service for team</span>
-                </label>
-                <div className="flex justify-end gap-2">
-                  <Button variant="secondary" size="sm" type="button" onClick={() => setShowAddOverride(false)}>Cancel</Button>
-                  <Button size="sm" type="submit" disabled={savingOverride}>{savingOverride ? "Saving..." : "Save"}</Button>
-                </div>
-              </form>
-            )}
-
-            {overrides.length === 0 ? (
-              <p className="text-xs text-text-secondary italic">No custom pricing set</p>
-            ) : (
-              <div className="space-y-1.5">
-                {overrides.map((ov) => (
-                  <div key={ov.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg border border-border text-sm bg-surface/30">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium bg-surface border border-border rounded px-1.5 py-0.5 capitalize">
-                        {ov.serviceType}
-                      </span>
-                      <span className="font-medium text-text-primary">
-                        {resolveServiceName(ov.serviceType, ov.serviceId)}
-                      </span>
-                      {ov.customPrice && (
-                        <span className="text-navy font-semibold">{fmtEuro(ov.customPrice)}</span>
-                      )}
-                      {ov.isDisabled && <Badge variant="error">Disabled</Badge>}
-                      {ov.reason && <span className="text-xs text-text-secondary italic">"{ov.reason}"</span>}
-                    </div>
-                    <button onClick={() => handleRemoveOverride(ov.id)}
-                      className="text-text-secondary hover:text-error transition-colors cursor-pointer ml-2 shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+        <PackagePricingCard
+          pkg={report.package}
+          packages={packages}
+          services={services}
+          overrides={overrides}
+          selectedPackageId={selectedPackageId}
+          assigningPackage={assigningPackage}
+          togglingPublish={togglingPublish}
+          teamId={teamId}
+          onAssign={handleAssignPackage}
+          onRemove={handleRemovePackage}
+          onTogglePublish={handleTogglePublish}
+          onSelectPackage={setSelectedPackageId}
+          onRefresh={fetchReport}
+        />
 
         {/* Hotel & Logistics */}
         <Card>

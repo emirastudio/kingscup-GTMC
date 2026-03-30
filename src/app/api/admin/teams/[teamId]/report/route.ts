@@ -174,6 +174,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
           name: packageInfo.name,
           assignedAt: assignment!.assignedAt,
           isPublished: assignment!.isPublished,
+          accommodationOptionId: packageInfo.accommodationOptionId ?? null,
         }
       : null,
     bookings,
@@ -202,10 +203,31 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       emergencyPhone: tInfo.emergencyPhone,
     } : null,
     services: {
-      accommodation: accommodations.map((a) => ({ id: a.id, name: a.name, checkIn: a.checkIn, checkOut: a.checkOut })),
-      meals: meals.map((m) => ({ id: m.id, name: m.name })),
-      transfers: transfers.map((t) => ({ id: t.id, name: t.name })),
-      registration: regFees.map((r) => ({ id: r.id, name: r.name })),
+      accommodation: accommodations.map((a) => ({
+        id: a.id, name: a.name,
+        checkIn: a.checkIn, checkOut: a.checkOut,
+        pricePerPlayer: a.pricePerPlayer,
+        pricePerStaff: a.pricePerStaff,
+        pricePerAccompanying: a.pricePerAccompanying,
+        includedMeals: a.includedMeals,
+        mealNote: a.mealNote,
+      })),
+      meals: meals.map((m) => ({
+        id: m.id, name: m.name,
+        pricePerPerson: m.pricePerPerson,
+        perDay: m.perDay,
+        description: m.description,
+      })),
+      transfers: transfers.map((t) => ({
+        id: t.id, name: t.name,
+        pricePerPerson: t.pricePerPerson,
+        description: t.description,
+      })),
+      registration: regFees.map((r) => ({
+        id: r.id, name: r.name,
+        price: r.price,
+        isRequired: r.isRequired,
+      })),
     },
   });
 }
