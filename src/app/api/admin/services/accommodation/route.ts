@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       pricePerPlayer: String(body.pricePerPlayer),
       pricePerStaff: String(body.pricePerStaff),
       pricePerAccompanying: String(body.pricePerAccompanying ?? 0),
-      includedMealsPerDay: body.includedMealsPerDay ?? 0,
+      includedMeals: body.includedMeals ?? 0,
       mealNote: body.mealNote,
       mealNoteRu: body.mealNoteRu,
       mealNoteEt: body.mealNoteEt,

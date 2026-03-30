@@ -363,7 +363,7 @@ export const accommodationOptions = pgTable("accommodation_options", {
   pricePerPlayer: decimal("price_per_player", { precision: 10, scale: 2 }).notNull(),
   pricePerStaff: decimal("price_per_staff", { precision: 10, scale: 2 }).notNull(),
   pricePerAccompanying: decimal("price_per_accompanying", { precision: 10, scale: 2 }).default("0").notNull(),
-  includedMealsPerDay: integer("included_meals_per_day").default(0).notNull(),
+  includedMeals: integer("included_meals").default(0).notNull(),
   mealNote: text("meal_note"),
   mealNoteRu: text("meal_note_ru"),
   mealNoteEt: text("meal_note_et"),

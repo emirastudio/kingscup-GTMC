@@ -19,7 +19,7 @@ type AccommodationOption = {
   pricePerPlayer: string;
   pricePerStaff: string;
   pricePerAccompanying: string;
-  includedMealsPerDay: number;
+  includedMeals: number;
   mealNote: string | null;
   mealNoteRu: string | null;
   sortOrder: number;
@@ -652,11 +652,11 @@ export default function BookingPage() {
                             </div>
                           </div>
 
-                          {(opt.includedMealsPerDay > 0 || mealNote) && (
+                          {(opt.includedMeals > 0 || mealNote) && (
                             <div className="mt-3 flex flex-wrap gap-2">
-                              {opt.includedMealsPerDay > 0 && (
+                              {opt.includedMeals > 0 && (
                                 <Badge variant="success">
-                                  {opt.includedMealsPerDay} {t("mealsPerDay")}
+                                  {opt.includedMeals} {t("mealsPerDay")}
                                 </Badge>
                               )}
                               {mealNote && (
