@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +53,8 @@ export default function AdminTeamsPage() {
   const t = useTranslations("admin.teams");
   const tTeam = useTranslations("team");
   const tc = useTranslations("common");
+  const router = useRouter();
+  const locale = useLocale();
 
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -262,7 +265,8 @@ export default function AdminTeamsPage() {
                   return (
                     <tr
                       key={team.id}
-                      className="border-b border-border last:border-0 hover:bg-surface"
+                      onClick={() => router.push(`/${locale}/admin/teams/${team.id}`)}
+                      className="border-b border-border last:border-0 hover:bg-navy/5 cursor-pointer"
                     >
                       {/* Reg number */}
                       <td className="px-4 py-3">
@@ -319,7 +323,7 @@ export default function AdminTeamsPage() {
                       </td>
 
                       {/* Status (clickable) */}
-                      <td className="px-4 py-3 relative">
+                      <td className="px-4 py-3 relative" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() =>
                             setStatusDropdown(
@@ -370,7 +374,7 @@ export default function AdminTeamsPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() =>
                             handleCopyInvite(team.club?.id, team.id)
