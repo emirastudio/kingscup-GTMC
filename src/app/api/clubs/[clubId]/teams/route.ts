@@ -80,7 +80,7 @@ export async function POST(
       clubId: cid,
       classId: body.classId ? parseInt(body.classId) : null,
       name: body.name,
-      status: "draft",
+      status: "open",
       regNumber: nextRegNumber,
     })
     .returning();
