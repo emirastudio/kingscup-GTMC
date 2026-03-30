@@ -11,9 +11,14 @@ import {
   teamServiceOverrides,
   payments,
   teamTravel,
+  tournamentInfo,
+  accommodationOptions,
+  extraMealOptions,
+  transferOptions,
+  registrationFees,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, and, sum, desc } from "drizzle-orm";
+import { eq, and, sum } from "drizzle-orm";
 
 type RouteContext = { params: Promise<{ teamId: string }> };
 
@@ -113,6 +118,19 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     where: eq(teamTravel.teamId, teamIdNum),
   });
 
+  // Tournament info (hotel, meals, schedule)
+  const tInfo = await db.query.tournamentInfo.findFirst({
+    where: eq(tournamentInfo.tournamentId, team.tournamentId),
+  });
+
+  // Services (to resolve booking names)
+  const [accommodations, meals, transfers, regFees] = await Promise.all([
+    db.query.accommodationOptions.findMany({ where: eq(accommodationOptions.tournamentId, team.tournamentId) }),
+    db.query.extraMealOptions.findMany({ where: eq(extraMealOptions.tournamentId, team.tournamentId) }),
+    db.query.transferOptions.findMany({ where: eq(transferOptions.tournamentId, team.tournamentId) }),
+    db.query.registrationFees.findMany({ where: eq(registrationFees.tournamentId, team.tournamentId) }),
+  ]);
+
   return NextResponse.json({
     team: {
       id: team.id,
@@ -151,7 +169,12 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       },
     },
     package: packageInfo
-      ? { id: packageInfo.id, name: packageInfo.name, assignedAt: assignment!.assignedAt }
+      ? {
+          id: packageInfo.id,
+          name: packageInfo.name,
+          assignedAt: assignment!.assignedAt,
+          isPublished: assignment!.isPublished,
+        }
       : null,
     bookings,
     overrides,
@@ -162,5 +185,27 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     },
     payments: paymentsHistory,
     travel: travel ?? null,
+    tournamentInfo: tInfo ? {
+      scheduleUrl: tInfo.scheduleUrl,
+      hotelName: tInfo.hotelName,
+      hotelAddress: tInfo.hotelAddress,
+      hotelCheckIn: tInfo.hotelCheckIn,
+      hotelCheckOut: tInfo.hotelCheckOut,
+      hotelNotes: tInfo.hotelNotes,
+      venueName: tInfo.venueName,
+      venueAddress: tInfo.venueAddress,
+      venueMapUrl: tInfo.venueMapUrl,
+      mealTimes: tInfo.mealTimes,
+      mealLocation: tInfo.mealLocation,
+      mealNotes: tInfo.mealNotes,
+      emergencyContact: tInfo.emergencyContact,
+      emergencyPhone: tInfo.emergencyPhone,
+    } : null,
+    services: {
+      accommodation: accommodations.map((a) => ({ id: a.id, name: a.name, checkIn: a.checkIn, checkOut: a.checkOut })),
+      meals: meals.map((m) => ({ id: m.id, name: m.name })),
+      transfers: transfers.map((t) => ({ id: t.id, name: t.name })),
+      registration: regFees.map((r) => ({ id: r.id, name: r.name })),
+    },
   });
 }
