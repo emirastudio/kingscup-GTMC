@@ -1,5 +1,6 @@
 import { TeamHeader } from "@/components/team/team-header";
 import { TeamSidebar } from "@/components/team/team-sidebar";
+import { MobileNav } from "@/components/team/mobile-nav";
 import { TeamSwitcher } from "@/components/club/team-switcher";
 import { TeamProvider } from "@/lib/team-context";
 import { getSession } from "@/lib/auth";
@@ -96,6 +97,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
           year={2026}
         />
         <div className="flex flex-1">
+          {/* Desktop sidebar */}
           <div className="hidden md:flex flex-col w-56 shrink-0 border-r border-border bg-white">
             <div className="p-4 border-b border-border">
               <TeamSwitcher
@@ -110,8 +112,11 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
               <TeamSidebar inboxCount={inboxCount} />
             </div>
           </div>
-          <main className="flex-1 p-6 bg-surface">{children}</main>
+          {/* Main content — extra bottom padding on mobile for bottom nav */}
+          <main className="flex-1 p-4 md:p-6 bg-surface pb-20 md:pb-6">{children}</main>
         </div>
+        {/* Mobile bottom nav */}
+        <MobileNav inboxCount={inboxCount} />
       </div>
     </TeamProvider>
   );

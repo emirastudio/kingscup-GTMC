@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { teams, people, orders, teamTravel, payments, tournamentClasses } from "@/db/schema";
+import { teams, people, teamBookings, teamTravel, payments, tournamentClasses } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
 
 export async function GET(
@@ -39,11 +39,11 @@ export async function GET(
   const [transferCount] = await db.select({ count: count() }).from(people)
     .where(and(eq(people.teamId, tid), eq(people.needsTransfer, true)));
 
-  // Orders total
+  // Bookings total (new model)
   const [orderTotal] = await db
-    .select({ total: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)` })
-    .from(orders)
-    .where(eq(orders.teamId, tid));
+    .select({ total: sql<string>`COALESCE(SUM(${teamBookings.total}::numeric), 0)` })
+    .from(teamBookings)
+    .where(eq(teamBookings.teamId, tid));
 
   // Payments total
   const [paymentTotal] = await db
