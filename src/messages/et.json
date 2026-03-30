@@ -315,7 +315,11 @@
       "totalTeams": "Meeskondi kokku",
       "confirmedTeams": "Kinnitatud",
       "pendingPayments": "Ootel maksed",
-      "totalRevenue": "Kogutulu"
+      "totalRevenue": "Kogutulu",
+      "quickActions": "Kiirtoimingud",
+      "messages": "Sõnumid",
+      "settings": "Seaded",
+      "date": "Kuupäev"
     },
     "teams": {
       "title": "Kõik meeskonnad",
@@ -325,7 +329,11 @@
       "changeStatus": "Muuda staatust",
       "copyLink": "Kopeeri link",
       "recentRegistrations": "Viimased registreerimised",
-      "noTeams": "Meeskondi pole veel"
+      "noTeams": "Meeskondi pole veel",
+      "players": "Mängijad",
+      "balance": "Saldo",
+      "copied": "Kopeeritud!",
+      "noResults": "Otsitavaid meeskondi ei leitud"
     },
     "messages": {
       "title": "Sõnumid",

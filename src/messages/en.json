@@ -315,7 +315,11 @@
       "totalTeams": "Total Teams",
       "confirmedTeams": "Confirmed",
       "pendingPayments": "Pending Payments",
-      "totalRevenue": "Total Revenue"
+      "totalRevenue": "Total Revenue",
+      "quickActions": "Quick Actions",
+      "messages": "Messages",
+      "settings": "Settings",
+      "date": "Date"
     },
     "teams": {
       "title": "All Teams",
@@ -325,7 +329,11 @@
       "changeStatus": "Change status",
       "copyLink": "Copy link",
       "recentRegistrations": "Recent Registrations",
-      "noTeams": "No teams yet"
+      "noTeams": "No teams yet",
+      "players": "Players",
+      "balance": "Balance",
+      "copied": "Copied!",
+      "noResults": "No teams match your search"
     },
     "messages": {
       "title": "Messages",

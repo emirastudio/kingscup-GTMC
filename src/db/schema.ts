@@ -294,6 +294,32 @@ export const tournamentDocuments = pgTable("tournament_documents", {
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
+// ─── Tournament Info ────────────────────────────────────
+export const tournamentInfo = pgTable("tournament_info", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(),
+  scheduleUrl: text("schedule_url"),
+  scheduleDescription: text("schedule_description"),
+  hotelName: text("hotel_name"),
+  hotelAddress: text("hotel_address"),
+  hotelCheckIn: text("hotel_check_in"),
+  hotelCheckOut: text("hotel_check_out"),
+  hotelNotes: text("hotel_notes"),
+  venueName: text("venue_name"),
+  venueAddress: text("venue_address"),
+  venueMapUrl: text("venue_map_url"),
+  mealTimes: text("meal_times"),
+  mealLocation: text("meal_location"),
+  mealNotes: text("meal_notes"),
+  emergencyContact: text("emergency_contact"),
+  emergencyPhone: text("emergency_phone"),
+  additionalNotes: text("additional_notes"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ─── Admin Users ────────────────────────────────────────
 export const adminUsers = pgTable("admin_users", {
   id: serial("id").primaryKey(),

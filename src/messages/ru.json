@@ -315,7 +315,11 @@
       "totalTeams": "Всего команд",
       "confirmedTeams": "Подтверждённых",
       "pendingPayments": "Ожидающих оплаты",
-      "totalRevenue": "Общий доход"
+      "totalRevenue": "Общий доход",
+      "quickActions": "Быстрые действия",
+      "messages": "Сообщения",
+      "settings": "Настройки",
+      "date": "Дата"
     },
     "teams": {
       "title": "Все команды",
@@ -325,7 +329,11 @@
       "changeStatus": "Изменить статус",
       "copyLink": "Копировать ссылку",
       "recentRegistrations": "Последние регистрации",
-      "noTeams": "Команд пока нет"
+      "noTeams": "Команд пока нет",
+      "players": "Игроки",
+      "balance": "Баланс",
+      "copied": "Скопировано!",
+      "noResults": "Нет команд по вашему запросу"
     },
     "messages": {
       "title": "Сообщения",
