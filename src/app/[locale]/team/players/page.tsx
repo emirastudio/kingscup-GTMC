@@ -12,12 +12,20 @@ export default function PlayersPage() {
   const tp = useTranslations("people");
   const { teamId } = useTeam();
   const [players, setPlayers] = useState<any[]>([]);
+  const [minBirthYear, setMinBirthYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchPlayers = useCallback(async () => {
     if (!teamId) return;
-    const res = await fetch(`/api/teams/${teamId}/people?type=player`);
-    if (res.ok) setPlayers(await res.json());
+    const [playersRes, overviewRes] = await Promise.all([
+      fetch(`/api/teams/${teamId}/people?type=player`),
+      fetch(`/api/teams/${teamId}/overview`),
+    ]);
+    if (playersRes.ok) setPlayers(await playersRes.json());
+    if (overviewRes.ok) {
+      const data = await overviewRes.json();
+      setMinBirthYear(data.minBirthYear ?? null);
+    }
     setLoading(false);
   }, [teamId]);
 
@@ -41,9 +49,11 @@ export default function PlayersPage() {
         </p>
       </div>
 
-      <Alert variant="info">
-        {tp("birthYearInfo", { year: "2014" })}
-      </Alert>
+      {minBirthYear && (
+        <Alert variant="info">
+          {tp("birthYearInfo", { year: String(minBirthYear) })}
+        </Alert>
+      )}
 
       <PlayerInlineTable
         players={players}

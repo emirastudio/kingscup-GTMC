@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { teams, people, orders, teamTravel, payments } from "@/db/schema";
-import { eq, and, count, sum, sql } from "drizzle-orm";
+import { teams, people, orders, teamTravel, payments, tournamentClasses } from "@/db/schema";
+import { eq, and, count, sql } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -12,6 +12,10 @@ export async function GET(
 
   const team = await db.query.teams.findFirst({ where: eq(teams.id, tid) });
   if (!team) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const teamClass = team.classId
+    ? await db.query.tournamentClasses.findFirst({ where: eq(tournamentClasses.id, team.classId) })
+    : null;
 
   // Counts
   const [playerCount] = await db.select({ count: count() }).from(people)
@@ -67,6 +71,7 @@ export async function GET(
 
   return NextResponse.json({
     team,
+    minBirthYear: teamClass?.minBirthYear ?? null,
     counts: {
       players: Number(playerCount?.count ?? 0),
       staff: Number(staffCount?.count ?? 0),
