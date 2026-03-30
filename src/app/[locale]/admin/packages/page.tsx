@@ -26,6 +26,13 @@ interface ServicePackage {
   description: string | null;
   isDefault: boolean;
   assignedTeams: number;
+  accommodationOptionId: number | null;
+  publishedTeams: number;
+}
+
+interface AccommodationOption {
+  id: number;
+  name: string;
 }
 
 interface Team {
@@ -39,6 +46,7 @@ interface Team {
   currentPackage?: {
     id: number;
     name: string;
+    isPublished: boolean;
   } | null;
 }
 
@@ -96,7 +104,7 @@ function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () =>
 
 /* ─────────────────────────────────────────── PackagesTab */
 
-const EMPTY_FORM = { name: "", nameRu: "", description: "", isDefault: false };
+const EMPTY_FORM = { name: "", nameRu: "", description: "", isDefault: false, accommodationOptionId: "" };
 
 function PackagesTab() {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -108,6 +116,8 @@ function PackagesTab() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [lang, setLang] = useState<Lang>("en");
+  const [accOptions, setAccOptions] = useState<AccommodationOption[]>([]);
+  const [publishing, setPublishing] = useState<number | null>(null);
 
   const loadPackages = useCallback(async () => {
     setLoading(true);
@@ -130,6 +140,13 @@ function PackagesTab() {
     loadPackages();
   }, [loadPackages]);
 
+  useEffect(() => {
+    fetch("/api/admin/services/accommodation")
+      .then((r) => r.ok ? r.json() : [])
+      .then(setAccOptions)
+      .catch(() => {});
+  }, []);
+
   const openNew = () => {
     setForm(EMPTY_FORM);
     setEditId("new");
@@ -141,6 +158,7 @@ function PackagesTab() {
       nameRu: pkg.nameRu,
       description: pkg.description ?? "",
       isDefault: pkg.isDefault,
+      accommodationOptionId: pkg.accommodationOptionId ? String(pkg.accommodationOptionId) : "",
     });
     setEditId(pkg.id);
   };
@@ -159,10 +177,14 @@ function PackagesTab() {
     setError(null);
     try {
       const isNew = editId === "new";
+      const payload = {
+        ...form,
+        accommodationOptionId: form.accommodationOptionId ? Number(form.accommodationOptionId) : null,
+      };
       const res = await fetch("/api/admin/packages", {
         method: isNew ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isNew ? form : { id: editId, ...form }),
+        body: JSON.stringify(isNew ? payload : { id: editId, ...payload }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -192,6 +214,16 @@ function PackagesTab() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Delete failed");
       setDeleteId(null);
+    }
+  };
+
+  const publishAll = async (pkgId: number) => {
+    setPublishing(pkgId);
+    try {
+      await fetch(`/api/admin/packages/${pkgId}/publish`, { method: "POST" });
+      await loadPackages();
+    } finally {
+      setPublishing(null);
     }
   };
 
@@ -250,6 +282,21 @@ function PackagesTab() {
                 placeholder={lang === "en" ? "Describe what's included…" : "Описание пакета…"}
                 className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-navy/30 resize-none"
               />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-secondary">
+                Accommodation option
+              </label>
+              <select
+                value={form.accommodationOptionId}
+                onChange={(e) => setForm((f) => ({ ...f, accommodationOptionId: e.target.value }))}
+                className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-navy/30 appearance-none"
+              >
+                <option value="">— Select accommodation —</option>
+                {accOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>{opt.name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
@@ -315,11 +362,31 @@ function PackagesTab() {
                 <p className="text-xs text-text-secondary leading-relaxed">{pkg.description}</p>
               )}
 
+              {pkg.accommodationOptionId && accOptions.find(o => o.id === pkg.accommodationOptionId) && (
+                <p className="text-xs text-navy font-medium">
+                  🏨 {accOptions.find(o => o.id === pkg.accommodationOptionId)?.name}
+                </p>
+              )}
+
               <div className="flex items-center gap-1.5 text-xs text-text-secondary">
                 <Users className="w-3.5 h-3.5" />
                 <span>
                   {pkg.assignedTeams} teams
                 </span>
+              </div>
+
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                <span className="text-xs text-text-secondary">
+                  {pkg.publishedTeams ?? 0}/{pkg.assignedTeams} published
+                </span>
+                <button
+                  type="button"
+                  disabled={publishing === pkg.id || pkg.assignedTeams === 0}
+                  onClick={() => publishAll(pkg.id)}
+                  className="text-xs font-semibold text-white bg-navy hover:bg-navy/80 px-3 py-1 rounded-md transition-colors disabled:opacity-40 cursor-pointer"
+                >
+                  {publishing === pkg.id ? "..." : "Publish All"}
+                </button>
               </div>
 
               <div className="flex items-center gap-2 pt-1 mt-auto">
@@ -388,6 +455,7 @@ function AssignmentsTab() {
   const [bulkAssigning, setBulkAssigning] = useState(false);
   const [saved, setSaved] = useState<number | "bulk" | null>(null);
   const [selectValues, setSelectValues] = useState<Record<number, string>>({});
+  const [togglingPublish, setTogglingPublish] = useState<number | null>(null);
 
   const flashSaved = (id: number | "bulk") => {
     setSaved(id);
@@ -409,7 +477,7 @@ function AssignmentsTab() {
         name: string;
         regNumber: string;
         club: { id: number | null; name: string | null };
-        currentPackage?: { id: number; name: string } | null;
+        currentPackage?: { id: number; name: string; isPublished: boolean } | null;
       }> = await teamsRes.json();
       const packagesData: ServicePackage[] = await packagesRes.json();
 
@@ -417,13 +485,13 @@ function AssignmentsTab() {
 
       // Fetch package assignments for each team
       const assignmentsRes = await fetch("/api/admin/teams/assignments");
-      let assignmentMap: Record<number, { id: number; name: string }> = {};
+      let assignmentMap: Record<number, { id: number; name: string; isPublished: boolean }> = {};
 
       if (assignmentsRes.ok) {
-        const assignmentsData: Array<{ teamId: number; packageId: number; packageName: string }> =
+        const assignmentsData: Array<{ teamId: number; packageId: number; packageName: string; isPublished: boolean }> =
           await assignmentsRes.json();
         assignmentMap = Object.fromEntries(
-          assignmentsData.map((a) => [a.teamId, { id: a.packageId, name: a.packageName }])
+          assignmentsData.map((a) => [a.teamId, { id: a.packageId, name: a.packageName, isPublished: a.isPublished }])
         );
       }
 
@@ -504,6 +572,20 @@ function AssignmentsTab() {
       setError(e instanceof Error ? e.message : "Remove failed");
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const togglePublish = async (teamId: number, currentValue: boolean) => {
+    setTogglingPublish(teamId);
+    try {
+      await fetch(`/api/admin/teams/${teamId}/assign-package`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPublished: !currentValue }),
+      });
+      await loadAll();
+    } finally {
+      setTogglingPublish(null);
     }
   };
 
@@ -620,13 +702,29 @@ function AssignmentsTab() {
                       <td className="px-4 py-3 font-medium text-text-primary">{team.name}</td>
                       <td className="px-4 py-3 text-text-secondary">{team.club.name ?? "—"}</td>
                       <td className="px-4 py-3">
-                        {team.currentPackage ? (
-                          <span className="inline-flex items-center rounded-full bg-navy/10 px-2.5 py-1 text-xs font-semibold text-navy">
-                            {team.currentPackage.name}
-                          </span>
-                        ) : (
-                          <span className="text-text-secondary/60 text-xs">—</span>
-                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {team.currentPackage ? (
+                            <span className="inline-flex items-center rounded-full bg-navy/10 px-2.5 py-1 text-xs font-semibold text-navy">
+                              {team.currentPackage.name}
+                            </span>
+                          ) : (
+                            <span className="text-text-secondary/60 text-xs">—</span>
+                          )}
+                          {team.currentPackage && (
+                            <button
+                              type="button"
+                              onClick={() => togglePublish(team.id, team.currentPackage!.isPublished)}
+                              disabled={togglingPublish === team.id}
+                              className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-colors cursor-pointer ${
+                                team.currentPackage.isPublished
+                                  ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700"
+                                  : "bg-orange-100 text-orange-700 hover:bg-green-100 hover:text-green-700"
+                              }`}
+                            >
+                              {togglingPublish === team.id ? "..." : team.currentPackage.isPublished ? "✓ Published" : "Unpublished"}
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2 flex-wrap">

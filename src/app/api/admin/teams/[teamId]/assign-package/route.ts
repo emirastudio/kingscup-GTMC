@@ -51,6 +51,33 @@ export async function POST(req: NextRequest, context: RouteContext) {
   return NextResponse.json(created, { status: 201 });
 }
 
+export async function PATCH(req: NextRequest, context: RouteContext) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { teamId } = await context.params;
+  const teamIdNum = Number(teamId);
+  const body = await req.json();
+
+  const existing = await db.query.packageAssignments.findFirst({
+    where: eq(packageAssignments.teamId, teamIdNum),
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: "No package assigned to this team" }, { status: 404 });
+  }
+
+  const [updated] = await db
+    .update(packageAssignments)
+    .set({ isPublished: body.isPublished })
+    .where(eq(packageAssignments.id, existing.id))
+    .returning();
+
+  return NextResponse.json(updated);
+}
+
 export async function DELETE(_req: NextRequest, context: RouteContext) {
   const session = await getSession();
   if (!session || session.role !== "admin") {

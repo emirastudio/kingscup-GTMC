@@ -346,6 +346,7 @@ export const servicePackages = pgTable("service_packages", {
   nameEt: text("name_et"),
   description: text("description"),
   isDefault: boolean("is_default").default(false).notNull(),
+  accommodationOptionId: integer("accommodation_option_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -432,6 +433,7 @@ export const packageAssignments = pgTable("package_assignments", {
     .notNull(),
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),
   assignedBy: integer("assigned_by"),
+  isPublished: boolean("is_published").default(false).notNull(),
 });
 
 // ─── Team Service Overrides (per-team custom pricing) ───

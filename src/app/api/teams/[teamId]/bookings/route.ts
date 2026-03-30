@@ -3,6 +3,7 @@ import { db } from "@/db";
 import {
   teams,
   packageAssignments,
+  servicePackages,
   accommodationOptions,
   extraMealOptions,
   transferOptions,
@@ -41,23 +42,34 @@ export async function GET(
     return NextResponse.json({ error: "Team not found" }, { status: 404 });
   }
 
-  // Check if package has been assigned
+  // Check if package has been assigned AND published
   const assignment = await db.query.packageAssignments.findFirst({
     where: eq(packageAssignments.teamId, tid),
   });
 
-  if (!assignment) {
+  if (!assignment || !assignment.isPublished) {
     return NextResponse.json({ available: false });
   }
 
+  // Get the package to find linked accommodation option
+  const pkg = await db.query.servicePackages.findFirst({
+    where: eq(servicePackages.id, assignment.packageId),
+  });
+
   const tournamentId = team.tournamentId;
 
+  // Load accommodation — only the option linked to this package (if set), else all
+  const accommodation = pkg?.accommodationOptionId
+    ? await db.query.accommodationOptions.findMany({
+        where: eq(accommodationOptions.id, pkg.accommodationOptionId),
+      })
+    : await db.query.accommodationOptions.findMany({
+        where: eq(accommodationOptions.tournamentId, tournamentId),
+        orderBy: [asc(accommodationOptions.sortOrder)],
+      });
+
   // Load all service options
-  const [accommodation, meals, transfers, registration] = await Promise.all([
-    db.query.accommodationOptions.findMany({
-      where: eq(accommodationOptions.tournamentId, tournamentId),
-      orderBy: [asc(accommodationOptions.sortOrder)],
-    }),
+  const [meals, transfers, registration] = await Promise.all([
     db.query.extraMealOptions.findMany({
       where: eq(extraMealOptions.tournamentId, tournamentId),
       orderBy: [asc(extraMealOptions.sortOrder)],

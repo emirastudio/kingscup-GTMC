@@ -16,6 +16,7 @@ export async function GET() {
       packageId: packageAssignments.packageId,
       packageName: servicePackages.name,
       assignedAt: packageAssignments.assignedAt,
+      isPublished: packageAssignments.isPublished,
     })
     .from(packageAssignments)
     .leftJoin(servicePackages, eq(packageAssignments.packageId, servicePackages.id));

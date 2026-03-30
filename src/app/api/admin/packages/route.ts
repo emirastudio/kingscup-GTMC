@@ -30,8 +30,10 @@ export async function GET() {
       nameEt: servicePackages.nameEt,
       description: servicePackages.description,
       isDefault: servicePackages.isDefault,
+      accommodationOptionId: servicePackages.accommodationOptionId,
       createdAt: servicePackages.createdAt,
       assignedTeams: count(packageAssignments.id),
+      publishedTeams: sql<number>`COUNT(CASE WHEN ${packageAssignments.isPublished} = true THEN 1 END)::int`,
     })
     .from(servicePackages)
     .leftJoin(packageAssignments, eq(packageAssignments.packageId, servicePackages.id))
@@ -64,6 +66,7 @@ export async function POST(req: NextRequest) {
       nameEt: body.nameEt,
       description: body.description,
       isDefault: body.isDefault ?? false,
+      accommodationOptionId: body.accommodationOptionId ?? null,
     })
     .returning();
 

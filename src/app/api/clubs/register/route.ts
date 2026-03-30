@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { clubs, clubUsers, teams, tournaments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { clubs, clubUsers, teams, tournaments, servicePackages, packageAssignments } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { hashPassword, createToken, setSessionCookie } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -82,6 +82,27 @@ export async function POST(req: NextRequest) {
       status: "open",
       regNumber: nextRegNumber++,
     });
+  }
+
+  // Auto-assign default package to each team if one exists
+  const defaultPackage = await db.query.servicePackages.findFirst({
+    where: and(
+      eq(servicePackages.tournamentId, tournament.id),
+      eq(servicePackages.isDefault, true)
+    ),
+  });
+
+  if (defaultPackage) {
+    const createdTeams = await db.query.teams.findMany({
+      where: and(eq(teams.clubId, club.id), eq(teams.tournamentId, tournament.id)),
+    });
+    for (const t of createdTeams) {
+      await db.insert(packageAssignments).values({
+        teamId: t.id,
+        packageId: defaultPackage.id,
+        isPublished: false,
+      }).onConflictDoNothing();
+    }
   }
 
   // Create club user with password + role
