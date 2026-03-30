@@ -40,6 +40,21 @@ export const personTypeEnum = pgEnum("person_type", [
   "accompanying",
 ]);
 
+export const serviceTypeEnum = pgEnum("service_type", [
+  "accommodation",
+  "meal",
+  "transfer",
+  "registration",
+]);
+
+export const bookingTypeEnum = pgEnum("booking_type", [
+  "accommodation",
+  "meal",
+  "transfer",
+  "registration",
+  "custom",
+]);
+
 // ─── Tournaments ────────────────────────────────────────
 export const tournaments = pgTable("tournaments", {
   id: serial("id").primaryKey(),
@@ -317,6 +332,135 @@ export const tournamentInfo = pgTable("tournament_info", {
   emergencyContact: text("emergency_contact"),
   emergencyPhone: text("emergency_phone"),
   additionalNotes: text("additional_notes"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Service Packages ───────────────────────────────────
+export const servicePackages = pgTable("service_packages", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  description: text("description"),
+  isDefault: boolean("is_default").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Accommodation Options ──────────────────────────────
+export const accommodationOptions = pgTable("accommodation_options", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  checkIn: timestamp("check_in"),
+  checkOut: timestamp("check_out"),
+  pricePerPlayer: decimal("price_per_player", { precision: 10, scale: 2 }).notNull(),
+  pricePerStaff: decimal("price_per_staff", { precision: 10, scale: 2 }).notNull(),
+  pricePerAccompanying: decimal("price_per_accompanying", { precision: 10, scale: 2 }).default("0").notNull(),
+  includedMealsPerDay: integer("included_meals_per_day").default(0).notNull(),
+  mealNote: text("meal_note"),
+  mealNoteRu: text("meal_note_ru"),
+  mealNoteEt: text("meal_note_et"),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Extra Meal Options ─────────────────────────────────
+export const extraMealOptions = pgTable("extra_meal_options", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  description: text("description"),
+  descriptionRu: text("description_ru"),
+  descriptionEt: text("description_et"),
+  pricePerPerson: decimal("price_per_person", { precision: 10, scale: 2 }).notNull(),
+  perDay: boolean("per_day").default(false).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Transfer Options ───────────────────────────────────
+export const transferOptions = pgTable("transfer_options", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  description: text("description"),
+  descriptionRu: text("description_ru"),
+  descriptionEt: text("description_et"),
+  pricePerPerson: decimal("price_per_person", { precision: 10, scale: 2 }).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Registration Fee ───────────────────────────────────
+export const registrationFees = pgTable("registration_fees", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").default("Registration fee").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  isRequired: boolean("is_required").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Package Assignments (package → team) ───────────────
+export const packageAssignments = pgTable("package_assignments", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(),
+  packageId: integer("package_id")
+    .references(() => servicePackages.id, { onDelete: "cascade" })
+    .notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  assignedBy: integer("assigned_by"),
+});
+
+// ─── Team Service Overrides (per-team custom pricing) ───
+export const teamServiceOverrides = pgTable("team_service_overrides", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  serviceType: serviceTypeEnum("service_type").notNull(),
+  serviceId: integer("service_id").notNull(),
+  customPrice: decimal("custom_price", { precision: 10, scale: 2 }),
+  isDisabled: boolean("is_disabled").default(false).notNull(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Team Bookings (replaces orders for new model) ──────
+export const teamBookings = pgTable("team_bookings", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  bookingType: bookingTypeEnum("booking_type").notNull(),
+  serviceId: integer("service_id").notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

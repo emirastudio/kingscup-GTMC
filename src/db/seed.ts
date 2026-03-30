@@ -127,6 +127,126 @@ async function seed() {
   ]);
   console.log("Products created");
 
+  // ─── New service model ────────────────────────────────
+  // Accommodation options
+  await db.insert(schema.accommodationOptions).values([
+    {
+      tournamentId: tournament.id,
+      name: "Full stay (5 nights)",
+      nameRu: "Полное проживание (5 ночей)",
+      nameEt: "Täismajutus (5 ööd)",
+      checkIn: new Date("2026-07-12"),
+      checkOut: new Date("2026-07-17"),
+      pricePerPlayer: "65",
+      pricePerStaff: "75",
+      pricePerAccompanying: "75",
+      includedMealsPerDay: 3,
+      mealNote: "Breakfast + Lunch + Dinner included",
+      mealNoteRu: "Завтрак + Обед + Ужин включены",
+      mealNoteEt: "Hommikusöök + Lõuna + Õhtusöök sisaldub",
+      sortOrder: 1,
+    },
+    {
+      tournamentId: tournament.id,
+      name: "Short stay (3 nights)",
+      nameRu: "Краткое проживание (3 ночи)",
+      nameEt: "Lühimajutus (3 ööd)",
+      checkIn: new Date("2026-07-13"),
+      checkOut: new Date("2026-07-16"),
+      pricePerPlayer: "45",
+      pricePerStaff: "55",
+      pricePerAccompanying: "55",
+      includedMealsPerDay: 3,
+      mealNote: "Breakfast + Lunch + Dinner included",
+      mealNoteRu: "Завтрак + Обед + Ужин включены",
+      mealNoteEt: "Hommikusöök + Lõuna + Õhtusöök sisaldub",
+      sortOrder: 2,
+    },
+  ]);
+  console.log("Accommodation options created");
+
+  // Extra meal options
+  await db.insert(schema.extraMealOptions).values([
+    {
+      tournamentId: tournament.id,
+      name: "Extra lunch",
+      nameRu: "Дополнительный обед",
+      nameEt: "Lisalõuna",
+      description: "Additional lunch for days not covered by accommodation",
+      pricePerPerson: "12",
+      perDay: true,
+      sortOrder: 1,
+    },
+    {
+      tournamentId: tournament.id,
+      name: "Extra dinner",
+      nameRu: "Дополнительный ужин",
+      nameEt: "Lisaõhtusöök",
+      description: "Additional dinner for days not covered by accommodation",
+      pricePerPerson: "15",
+      perDay: true,
+      sortOrder: 2,
+    },
+  ]);
+  console.log("Extra meal options created");
+
+  // Transfer options
+  await db.insert(schema.transferOptions).values([
+    {
+      tournamentId: tournament.id,
+      name: "Self-organized",
+      nameRu: "Самостоятельно",
+      nameEt: "Iseorganiseeritud",
+      description: "No transfer needed — team arranges own transport",
+      descriptionRu: "Трансфер не нужен — команда добирается самостоятельно",
+      pricePerPerson: "0",
+      sortOrder: 1,
+    },
+    {
+      tournamentId: tournament.id,
+      name: "Airport ↔ Hotel",
+      nameRu: "Аэропорт ↔ Отель",
+      nameEt: "Lennujaam ↔ Hotell",
+      description: "Pick-up from airport/station to hotel and back",
+      descriptionRu: "Встреча в аэропорту/вокзале, доставка в отель и обратно",
+      pricePerPerson: "25",
+      sortOrder: 2,
+    },
+    {
+      tournamentId: tournament.id,
+      name: "Full transfer",
+      nameRu: "Полный трансфер",
+      nameEt: "Täistransfer",
+      description: "Airport ↔ Hotel + Hotel ↔ Stadium for all match days",
+      descriptionRu: "Аэропорт ↔ Отель + Отель ↔ Стадион на все дни матчей",
+      pricePerPerson: "50",
+      sortOrder: 3,
+    },
+  ]);
+  console.log("Transfer options created");
+
+  // Registration fee
+  await db.insert(schema.registrationFees).values({
+    tournamentId: tournament.id,
+    name: "Registration fee",
+    nameRu: "Регистрационный взнос",
+    nameEt: "Registreerimistasu",
+    price: "150",
+    isRequired: true,
+  });
+  console.log("Registration fee created");
+
+  // Default service package
+  const [pkg] = await db.insert(schema.servicePackages).values({
+    tournamentId: tournament.id,
+    name: "Standard Package",
+    nameRu: "Стандартный пакет",
+    nameEt: "Standardpakett",
+    description: "Full accommodation, meals, and transfer options",
+    isDefault: true,
+  }).returning();
+  console.log("Service package created:", pkg.name);
+
   // Create a test club
   const clubPasswordHash = await bcrypt.hash("club123", 12);
   const [club] = await db
