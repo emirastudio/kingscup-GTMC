@@ -14,12 +14,14 @@ import {
   Crown,
   LogOut,
   Package,
+  Layers,
 } from "lucide-react";
 
 const navItems = [
   { key: "dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { key: "teams", icon: Users, href: "/admin/teams" },
   { key: "services", icon: Package, href: "/admin/services" },
+  { key: "packages", icon: Layers, href: "/admin/packages" },
   { key: "payments", icon: Wallet, href: "/admin/payments" },
   { key: "messages", icon: Mail, href: "/admin/messages" },
   { key: "tournaments", icon: Trophy, href: "/admin/tournaments" },

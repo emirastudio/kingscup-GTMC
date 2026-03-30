@@ -52,7 +52,8 @@
     "settings": "Settings",
     "tournaments": "Tournaments",
     "payments": "Payments",
-    "services": "Services"
+    "services": "Services",
+    "packages": "Packages"
   },
   "team": {
     "regNumber": "Registration number",
