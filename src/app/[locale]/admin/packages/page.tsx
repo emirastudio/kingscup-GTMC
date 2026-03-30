@@ -537,7 +537,7 @@ function AssignmentsTab() {
       setTeams((prev) =>
         prev.map((t) =>
           t.id === teamId
-            ? { ...t, currentPackage: pkg ? { id: pkg.id, name: pkg.name } : null }
+            ? { ...t, currentPackage: pkg ? { id: pkg.id, name: pkg.name, isPublished: false } : null }
             : t
         )
       );
