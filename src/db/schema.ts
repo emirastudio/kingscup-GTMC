@@ -1,0 +1,305 @@
+import {
+  pgTable,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  serial,
+  decimal,
+  pgEnum,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
+
+// ─── Enums ──────────────────────────────────────────────
+export const teamStatusEnum = pgEnum("team_status", [
+  "draft",
+  "open",
+  "confirmed",
+  "cancelled",
+]);
+
+export const accessLevelEnum = pgEnum("access_level", ["read", "write"]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "received",
+  "refunded",
+]);
+
+export const paymentMethodEnum = pgEnum("payment_method", [
+  "bank_transfer",
+  "stripe",
+  "cash",
+]);
+
+export const adminRoleEnum = pgEnum("admin_role", ["super_admin", "admin"]);
+
+export const personTypeEnum = pgEnum("person_type", [
+  "player",
+  "staff",
+  "accompanying",
+]);
+
+// ─── Tournaments ────────────────────────────────────────
+export const tournaments = pgTable("tournaments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  year: integer("year").notNull(),
+  description: text("description"),
+  logoUrl: text("logo_url"),
+  registrationOpen: boolean("registration_open").default(false).notNull(),
+  registrationDeadline: timestamp("registration_deadline"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  currency: text("currency").default("EUR").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Tournament Classes ─────────────────────────────────
+export const tournamentClasses = pgTable("tournament_classes", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  minBirthYear: integer("min_birth_year"),
+  maxBirthYear: integer("max_birth_year"),
+  maxPlayers: integer("max_players").default(25),
+  maxStaff: integer("max_staff").default(5),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Tournament Products (base prices) ──────────────────
+export const tournamentProducts = pgTable("tournament_products", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  description: text("description"),
+  descriptionRu: text("description_ru"),
+  descriptionEt: text("description_et"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  category: text("category").notNull(), // registration, accommodation, transfer, meals, extra
+  isRequired: boolean("is_required").default(false).notNull(),
+  includedQuantity: integer("included_quantity").default(0).notNull(),
+  perPerson: boolean("per_person").default(false).notNull(), // price is per person
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Clubs (1 club = N teams) ───────────────────────────
+export const clubs = pgTable("clubs", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  country: text("country"),
+  city: text("city"),
+  badgeUrl: text("badge_url"),
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Club Users (login — one account per club) ─────────
+export const clubUsers = pgTable("club_users", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id")
+    .references(() => clubs.id, { onDelete: "cascade" })
+    .notNull(),
+  email: text("email").notNull(),
+  name: text("name"),
+  passwordHash: text("password_hash"),
+  accessLevel: accessLevelEnum("access_level").default("write").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Teams (belongs to a club) ──────────────────────────
+export const teams = pgTable(
+  "teams",
+  {
+    id: serial("id").primaryKey(),
+    tournamentId: integer("tournament_id")
+      .references(() => tournaments.id, { onDelete: "cascade" })
+      .notNull(),
+    clubId: integer("club_id")
+      .references(() => clubs.id, { onDelete: "cascade" }),
+    classId: integer("class_id").references(() => tournamentClasses.id),
+    name: text("name"),
+    status: teamStatusEnum("status").default("draft").notNull(),
+    regNumber: integer("reg_number").notNull(),
+    notes: text("notes"), // admin notes about this team
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("teams_tournament_reg_idx").on(
+      table.tournamentId,
+      table.regNumber
+    ),
+  ]
+);
+
+// teamUsers removed — login is per club via clubUsers
+
+// ─── People (Players + Staff + Accompanying) ────────────
+// One unified table with personType to distinguish
+export const people = pgTable("people", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  personType: personTypeEnum("person_type").notNull(),
+
+  // Basic info
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  dateOfBirth: timestamp("date_of_birth"),
+
+  // Player-specific
+  shirtNumber: integer("shirt_number"),
+  position: text("position"),
+
+  // Staff-specific
+  role: text("role"), // head coach, assistant, physio, etc.
+  isResponsibleOnSite: boolean("is_responsible_on_site").default(false).notNull(),
+
+  // Medical / dietary
+  allergies: text("allergies"), // free text: "gluten, nuts"
+  dietaryRequirements: text("dietary_requirements"), // vegetarian, halal, etc.
+  medicalNotes: text("medical_notes"), // medications, conditions
+  medicalDocumentUrl: text("medical_document_url"),
+
+  // Hotel
+  needsHotel: boolean("needs_hotel").default(false).notNull(),
+  needsTransfer: boolean("needs_transfer").default(false).notNull(),
+
+  // Visibility
+  showPublicly: boolean("show_publicly").default(false).notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Team Price Overrides (custom pricing per team) ─────
+// Admin can override base tournament product prices per team
+export const teamPriceOverrides = pgTable("team_price_overrides", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  productId: integer("product_id")
+    .references(() => tournamentProducts.id, { onDelete: "cascade" })
+    .notNull(),
+  customPrice: decimal("custom_price", { precision: 10, scale: 2 }).notNull(),
+  reason: text("reason"), // "Early bird discount", "Partner club", etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Orders ─────────────────────────────────────────────
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  productId: integer("product_id")
+    .references(() => tournamentProducts.id)
+    .notNull(),
+  quantity: integer("quantity").default(0).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Payments ───────────────────────────────────────────
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  method: paymentMethodEnum("method").default("bank_transfer").notNull(),
+  status: paymentStatusEnum("status").default("pending").notNull(),
+  reference: text("reference"),
+  notes: text("notes"),
+  receivedAt: timestamp("received_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Team Travel ────────────────────────────────────────
+export const teamTravel = pgTable("team_travel", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull()
+    .unique(),
+  arrivalType: text("arrival_type"), // airport, port, railway, bus_station, own_bus
+  arrivalDate: timestamp("arrival_date"),
+  arrivalTime: text("arrival_time"),
+  arrivalDetails: text("arrival_details"), // flight number, etc.
+  departureType: text("departure_type"), // airport, port, railway, bus_station, own_bus
+  departureDate: timestamp("departure_date"),
+  departureTime: text("departure_time"),
+  departureDetails: text("departure_details"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ─── Inbox Messages ─────────────────────────────────────
+export const inboxMessages = pgTable("inbox_messages", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  sentBy: integer("sent_by").notNull(),
+});
+
+export const teamMessageReads = pgTable("team_message_reads", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id")
+    .references(() => inboxMessages.id, { onDelete: "cascade" })
+    .notNull(),
+  teamId: integer("team_id")
+    .references(() => teams.id, { onDelete: "cascade" })
+    .notNull(),
+  readAt: timestamp("read_at").defaultNow().notNull(),
+});
+
+// ─── Tournament Documents (admin uploads, visible to all teams) ─
+export const tournamentDocuments = pgTable("tournament_documents", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  nameRu: text("name_ru"),
+  nameEt: text("name_et"),
+  fileUrl: text("file_url").notNull(),
+  fileSize: text("file_size"),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+// ─── Admin Users ────────────────────────────────────────
+export const adminUsers = pgTable("admin_users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: adminRoleEnum("role").default("admin").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
