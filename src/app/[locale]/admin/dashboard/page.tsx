@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,9 @@ export default function AdminDashboardPage() {
   const tTeams = useTranslations("admin.teams");
   const tTeam = useTranslations("team");
   const tc = useTranslations("common");
+
+  const router = useRouter();
+  const locale = useLocale();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,7 +173,8 @@ export default function AdminDashboardPage() {
                 {data.recentTeams.map((team) => (
                   <tr
                     key={team.id}
-                    className="border-b border-border last:border-0 hover:bg-surface"
+                    className="border-b border-border last:border-0 hover:bg-navy/5 cursor-pointer"
+                    onClick={() => router.push(`/${locale}/admin/teams/${team.id}`)}
                   >
                     <td className="px-6 py-3 text-sm font-medium text-text-primary">
                       {team.name || "-"}

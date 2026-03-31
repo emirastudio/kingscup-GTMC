@@ -72,6 +72,7 @@ export async function PATCH(req: NextRequest) {
           .update(tournamentClasses)
           .set({
             name: cls.name,
+            format: cls.format ?? null,
             minBirthYear: cls.minBirthYear,
             maxBirthYear: cls.maxBirthYear,
             maxPlayers: cls.maxPlayers,
@@ -82,6 +83,7 @@ export async function PATCH(req: NextRequest) {
         await db.insert(tournamentClasses).values({
           tournamentId: tournament.id,
           name: cls.name,
+          format: cls.format ?? null,
           minBirthYear: cls.minBirthYear,
           maxBirthYear: cls.maxBirthYear,
           maxPlayers: cls.maxPlayers,

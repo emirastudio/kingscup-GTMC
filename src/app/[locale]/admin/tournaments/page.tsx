@@ -13,6 +13,7 @@ import {
   Save,
   Loader2,
   Check,
+  Info,
 } from "lucide-react";
 
 /* ────────────────────────────────────────────────── types */
@@ -20,6 +21,7 @@ import {
 interface TournamentClass {
   id?: number;
   name: string;
+  format: string | null;
   minBirthYear: number | null;
   maxPlayers: number | null;
   maxStaff: number | null;
@@ -50,7 +52,51 @@ interface TournamentData {
   products: TournamentProduct[];
 }
 
-type Tab = "general" | "classes" | "products";
+type Tab = "general" | "classes" | "products" | "fields" | "hotels" | "info";
+
+const FORMATS = ["5x5", "6x6", "7x7", "8x8", "9x9", "11x11"];
+
+interface TournamentField {
+  id?: number;
+  name: string;
+  address: string;
+  mapUrl: string;
+  scheduleUrl: string;
+  notes: string;
+  sortOrder: number;
+  _deleted?: boolean;
+}
+
+interface TournamentHotel {
+  id?: number;
+  name: string;
+  address: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  notes: string;
+  sortOrder: number;
+  _deleted?: boolean;
+}
+
+interface TournamentInfoData {
+  hotelName?: string;
+  hotelAddress?: string;
+  hotelCheckIn?: string;
+  hotelCheckOut?: string;
+  hotelNotes?: string;
+  venueName?: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
+  mealTimes?: string;
+  mealLocation?: string;
+  mealNotes?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  scheduleUrl?: string;
+  scheduleDescription?: string;
+  additionalNotes?: string;
+}
 
 const CATEGORIES = [
   "registration",
@@ -144,12 +190,32 @@ export default function AdminTournamentsPage() {
     idx: number;
   } | null>(null);
 
+  // Tournament info state
+  const [tInfo, setTInfo] = useState<TournamentInfoData>({});
+  const [infoSaving, setInfoSaving] = useState(false);
+  const [infoSaved, setInfoSaved] = useState(false);
+
+  // Fields state
+  const [fields, setFields] = useState<TournamentField[]>([]);
+  const [fieldsSaving, setFieldsSaving] = useState(false);
+  const [fieldsSaved, setFieldsSaved] = useState(false);
+
+  // Hotels state
+  const [hotels, setHotels] = useState<TournamentHotel[]>([]);
+  const [hotelsSaving, setHotelsSaving] = useState(false);
+  const [hotelsSaved, setHotelsSaved] = useState(false);
+
   /* ─── fetch ─── */
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/tournaments");
+      const [res, infoRes, fieldsRes, hotelsRes] = await Promise.all([
+        fetch("/api/admin/tournaments"),
+        fetch("/api/admin/tournament-info"),
+        fetch("/api/admin/tournament-fields"),
+        fetch("/api/admin/tournament-hotels"),
+      ]);
       if (!res.ok) throw new Error("Failed to load tournament data");
       const d: TournamentData = await res.json();
       setData(d);
@@ -160,8 +226,45 @@ export default function AdminTournamentsPage() {
       setRegDeadline(toDateInput(d.registrationDeadline));
       setRegOpen(d.registrationOpen);
       setCurrency(d.currency);
-      setClasses(d.classes ?? []);
+      setClasses((d.classes ?? []).map((c: TournamentClass) => ({ ...c, format: c.format ?? null })));
       setProducts(d.products ?? []);
+      if (fieldsRes.ok) {
+        const f = await fieldsRes.json();
+        setFields(Array.isArray(f) ? f.map((x: TournamentField) => ({
+          id: x.id, name: x.name ?? "", address: x.address ?? "",
+          mapUrl: x.mapUrl ?? "", scheduleUrl: x.scheduleUrl ?? "",
+          notes: x.notes ?? "", sortOrder: x.sortOrder ?? 0,
+        })) : []);
+      }
+      if (hotelsRes.ok) {
+        const h = await hotelsRes.json();
+        setHotels(Array.isArray(h) ? h.map((x: TournamentHotel) => ({
+          id: x.id, name: x.name ?? "", address: x.address ?? "",
+          contactName: x.contactName ?? "", contactPhone: x.contactPhone ?? "",
+          contactEmail: x.contactEmail ?? "", notes: x.notes ?? "", sortOrder: x.sortOrder ?? 0,
+        })) : []);
+      }
+      if (infoRes.ok) {
+        const info = await infoRes.json();
+        setTInfo({
+          hotelName: info.hotelName ?? "",
+          hotelAddress: info.hotelAddress ?? "",
+          hotelCheckIn: info.hotelCheckIn ?? "",
+          hotelCheckOut: info.hotelCheckOut ?? "",
+          hotelNotes: info.hotelNotes ?? "",
+          venueName: info.venueName ?? "",
+          venueAddress: info.venueAddress ?? "",
+          venueMapUrl: info.venueMapUrl ?? "",
+          mealTimes: info.mealTimes ?? "",
+          mealLocation: info.mealLocation ?? "",
+          mealNotes: info.mealNotes ?? "",
+          emergencyContact: info.emergencyContact ?? "",
+          emergencyPhone: info.emergencyPhone ?? "",
+          scheduleUrl: info.scheduleUrl ?? "",
+          scheduleDescription: info.scheduleDescription ?? "",
+          additionalNotes: info.additionalNotes ?? "",
+        });
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -220,11 +323,112 @@ export default function AdminTournamentsPage() {
         .map((p, i) => ({ ...p, sortOrder: i })),
     });
 
+  const saveFields = async () => {
+    setFieldsSaving(true);
+    setFieldsSaved(false);
+    try {
+      const toDelete = fields.filter((f) => f._deleted && f.id);
+      const toUpsert = fields.filter((f) => !f._deleted);
+      await Promise.all(toDelete.map((f) =>
+        fetch(`/api/admin/tournament-fields?id=${f.id}`, { method: "DELETE" })
+      ));
+      for (const f of toUpsert) {
+        if (f.id) {
+          await fetch("/api/admin/tournament-fields", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
+        } else {
+          await fetch("/api/admin/tournament-fields", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
+        }
+      }
+      // Refresh
+      const res = await fetch("/api/admin/tournament-fields");
+      if (res.ok) {
+        const f = await res.json();
+        setFields(Array.isArray(f) ? f.map((x: TournamentField) => ({
+          id: x.id, name: x.name ?? "", address: x.address ?? "",
+          mapUrl: x.mapUrl ?? "", scheduleUrl: x.scheduleUrl ?? "",
+          notes: x.notes ?? "", sortOrder: x.sortOrder ?? 0,
+        })) : []);
+      }
+      setFieldsSaved(true);
+      setTimeout(() => setFieldsSaved(false), 2000);
+    } catch {
+      setError("Failed to save fields.");
+    } finally {
+      setFieldsSaving(false);
+    }
+  };
+
+  const saveHotels = async () => {
+    setHotelsSaving(true);
+    setHotelsSaved(false);
+    try {
+      const toDelete = hotels.filter((h) => h._deleted && h.id);
+      const toUpsert = hotels.filter((h) => !h._deleted);
+      await Promise.all(toDelete.map((h) =>
+        fetch(`/api/admin/tournament-hotels?id=${h.id}`, { method: "DELETE" })
+      ));
+      for (const h of toUpsert) {
+        if (h.id) {
+          await fetch("/api/admin/tournament-hotels", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(h) });
+        } else {
+          await fetch("/api/admin/tournament-hotels", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(h) });
+        }
+      }
+      // Refresh
+      const res = await fetch("/api/admin/tournament-hotels");
+      if (res.ok) {
+        const h = await res.json();
+        setHotels(Array.isArray(h) ? h.map((x: TournamentHotel) => ({
+          id: x.id, name: x.name ?? "", address: x.address ?? "",
+          contactName: x.contactName ?? "", contactPhone: x.contactPhone ?? "",
+          contactEmail: x.contactEmail ?? "", notes: x.notes ?? "", sortOrder: x.sortOrder ?? 0,
+        })) : []);
+      }
+      setHotelsSaved(true);
+      setTimeout(() => setHotelsSaved(false), 2000);
+    } catch {
+      setError("Failed to save hotels.");
+    } finally {
+      setHotelsSaving(false);
+    }
+  };
+
+  const saveInfo = async () => {
+    setInfoSaving(true);
+    setInfoSaved(false);
+    try {
+      const res = await fetch("/api/admin/tournament-info", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tInfo),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setInfoSaved(true);
+      setTimeout(() => setInfoSaved(false), 2000);
+    } catch {
+      setError("Failed to save info. Please try again.");
+    } finally {
+      setInfoSaving(false);
+    }
+  };
+
   /* ─── class mutations ─── */
   const addClass = () =>
     setClasses((prev) => [
       ...prev,
-      { name: "", minBirthYear: null, maxPlayers: 25, maxStaff: 5 },
+      { name: "", format: null, minBirthYear: null, maxPlayers: 25, maxStaff: 5 },
+    ]);
+
+  const addField = () =>
+    setFields((prev) => [
+      ...prev,
+      { name: "", address: "", mapUrl: "", scheduleUrl: "", notes: "", sortOrder: prev.length },
+    ]);
+
+  const addHotel = () =>
+    setHotels((prev) => [
+      ...prev,
+      { name: "", address: "", contactName: "", contactPhone: "", contactEmail: "", notes: "", sortOrder: prev.length },
     ]);
 
   const updateClass = (idx: number, field: string, value: unknown) =>
@@ -334,6 +538,24 @@ export default function AdminTournamentsPage() {
           icon={ShoppingBag}
           label="Products & Prices"
         />
+        <SectionTab
+          active={tab === "fields"}
+          onClick={() => setTab("fields")}
+          icon={Info}
+          label="Поля"
+        />
+        <SectionTab
+          active={tab === "hotels"}
+          onClick={() => setTab("hotels")}
+          icon={Info}
+          label="Отели"
+        />
+        <SectionTab
+          active={tab === "info"}
+          onClick={() => setTab("info")}
+          icon={Info}
+          label="Доп. инфо"
+        />
       </div>
 
       {/* ─── General Settings ─── */}
@@ -434,6 +656,9 @@ export default function AdminTournamentsPage() {
                       Name
                     </th>
                     <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase">
+                      Формат
+                    </th>
+                    <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase">
                       Min Birth Year
                     </th>
                     <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase">
@@ -464,6 +689,18 @@ export default function AdminTournamentsPage() {
                             placeholder="e.g. U12"
                             className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                           />
+                        </td>
+                        <td className="px-4 py-2">
+                          <select
+                            value={cls.format ?? ""}
+                            onChange={(e) => updateClass(idx, "format", e.target.value || null)}
+                            className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy bg-white"
+                          >
+                            <option value="">—</option>
+                            {FORMATS.map((f) => (
+                              <option key={f} value={f}>{f}</option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-4 py-2">
                           <input
@@ -714,6 +951,259 @@ export default function AdminTournamentsPage() {
             <SaveButton saving={saving} saved={saved} onClick={saveProducts} />
           </div>
         </Card>
+      )}
+
+      {/* ─── Fields tab ─── */}
+      {tab === "fields" && (
+        <Card padding={false}>
+          <div className="p-6 border-b border-border flex items-center justify-between">
+            <CardTitle>⚽ Поля / Базы</CardTitle>
+            <Button size="sm" onClick={addField}>
+              <Plus className="w-4 h-4" />
+              Добавить поле
+            </Button>
+          </div>
+          <div className="divide-y divide-border">
+            {fields.filter((f) => !f._deleted).length === 0 && (
+              <div className="text-center py-10 text-text-secondary text-sm">
+                Нет полей. Нажмите &quot;Добавить поле&quot;.
+              </div>
+            )}
+            {fields.map((field, idx) =>
+              field._deleted ? null : (
+                <div key={field.id ?? `new-${idx}`} className="p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-navy bg-navy/10 rounded-full w-6 h-6 flex items-center justify-center shrink-0">{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={field.name}
+                      onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, name: e.target.value } : f))}
+                      placeholder="Название поля / базы"
+                      className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-medium focus:outline-none focus:border-navy"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, _deleted: true } : f))}
+                      className="text-text-secondary hover:text-error transition-colors cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
+                    <input
+                      type="text"
+                      value={field.address}
+                      onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, address: e.target.value } : f))}
+                      placeholder="Адрес"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="url"
+                      value={field.mapUrl}
+                      onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, mapUrl: e.target.value } : f))}
+                      placeholder="Ссылка на карту (Google Maps)"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="url"
+                      value={field.scheduleUrl}
+                      onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, scheduleUrl: e.target.value } : f))}
+                      placeholder="Ссылка на расписание / автобусы"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="text"
+                      value={field.notes}
+                      onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, notes: e.target.value } : f))}
+                      placeholder="Доп. информация"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+          <div className="p-4 border-t border-border flex justify-end">
+            <SaveButton saving={fieldsSaving} saved={fieldsSaved} onClick={saveFields} />
+          </div>
+        </Card>
+      )}
+
+      {/* ─── Hotels tab ─── */}
+      {tab === "hotels" && (
+        <Card padding={false}>
+          <div className="p-6 border-b border-border flex items-center justify-between">
+            <CardTitle>🏨 Отели</CardTitle>
+            <Button size="sm" onClick={addHotel}>
+              <Plus className="w-4 h-4" />
+              Добавить отель
+            </Button>
+          </div>
+          <div className="divide-y divide-border">
+            {hotels.filter((h) => !h._deleted).length === 0 && (
+              <div className="text-center py-10 text-text-secondary text-sm">
+                Нет отелей. Нажмите &quot;Добавить отель&quot;.
+              </div>
+            )}
+            {hotels.map((hotel, idx) =>
+              hotel._deleted ? null : (
+                <div key={hotel.id ?? `new-${idx}`} className="p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-navy bg-navy/10 rounded-full w-6 h-6 flex items-center justify-center shrink-0">{idx + 1}</span>
+                    <input
+                      type="text"
+                      value={hotel.name}
+                      onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, name: e.target.value } : h))}
+                      placeholder="Название отеля"
+                      className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-medium focus:outline-none focus:border-navy"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, _deleted: true } : h))}
+                      className="text-text-secondary hover:text-error transition-colors cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
+                    <input
+                      type="text"
+                      value={hotel.address}
+                      onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, address: e.target.value } : h))}
+                      placeholder="Адрес"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="text"
+                      value={hotel.contactName}
+                      onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, contactName: e.target.value } : h))}
+                      placeholder="Контактное лицо"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="tel"
+                      value={hotel.contactPhone}
+                      onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, contactPhone: e.target.value } : h))}
+                      placeholder="Телефон"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <input
+                      type="email"
+                      value={hotel.contactEmail}
+                      onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, contactEmail: e.target.value } : h))}
+                      placeholder="Email"
+                      className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                    />
+                    <div className="md:col-span-2">
+                      <input
+                        type="text"
+                        value={hotel.notes}
+                        onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, notes: e.target.value } : h))}
+                        placeholder="Заметки (завтрак, парковка, etc.)"
+                        className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+          <div className="p-4 border-t border-border flex justify-end">
+            <SaveButton saving={hotelsSaving} saved={hotelsSaved} onClick={saveHotels} />
+          </div>
+        </Card>
+      )}
+
+      {/* ─── Tournament Info ─── */}
+      {tab === "info" && (
+        <div className="space-y-5">
+          {/* Hotel */}
+          <Card>
+            <CardTitle>🏨 Отель / Проживание</CardTitle>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input id="hotelName" label="Название отеля" value={tInfo.hotelName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelName: e.target.value }))} placeholder="Radisson Blu Hotel" />
+              <Input id="hotelAddress" label="Адрес" value={tInfo.hotelAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelAddress: e.target.value }))} placeholder="ул. Примерная, 1, Таллинн" />
+              <Input id="hotelCheckIn" label="Check-in (время)" value={tInfo.hotelCheckIn ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckIn: e.target.value }))} placeholder="14:00, 15 мая" />
+              <Input id="hotelCheckOut" label="Check-out (время)" value={tInfo.hotelCheckOut ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckOut: e.target.value }))} placeholder="12:00, 18 мая" />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Заметки об отеле</label>
+                <textarea
+                  rows={2}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
+                  value={tInfo.hotelNotes ?? ""}
+                  onChange={(e) => setTInfo((p) => ({ ...p, hotelNotes: e.target.value }))}
+                  placeholder="Завтрак включён, парковка бесплатная..."
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Venue */}
+          <Card>
+            <CardTitle>⚽ Стадион / Футбольные поля</CardTitle>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input id="venueName" label="Название стадиона" value={tInfo.venueName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueName: e.target.value }))} placeholder="A. Le Coq Arena" />
+              <Input id="venueAddress" label="Адрес" value={tInfo.venueAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueAddress: e.target.value }))} placeholder="Asula 4c, Таллинн" />
+              <div className="md:col-span-2">
+                <Input id="venueMapUrl" label="Ссылка на карту (Google Maps / Waze)" value={tInfo.venueMapUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueMapUrl: e.target.value }))} placeholder="https://maps.google.com/..." />
+              </div>
+            </div>
+          </Card>
+
+          {/* Meals */}
+          <Card>
+            <CardTitle>🍽️ Питание</CardTitle>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input id="mealTimes" label="Время питания" value={tInfo.mealTimes ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealTimes: e.target.value }))} placeholder="Завтрак 7:30-9:00, Обед 13:00, Ужин 19:00" />
+              <Input id="mealLocation" label="Место питания" value={tInfo.mealLocation ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealLocation: e.target.value }))} placeholder="Ресторан отеля, 1 этаж" />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Заметки по питанию</label>
+                <textarea
+                  rows={2}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
+                  value={tInfo.mealNotes ?? ""}
+                  onChange={(e) => setTInfo((p) => ({ ...p, mealNotes: e.target.value }))}
+                  placeholder="Вегетарианское меню по запросу..."
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Schedule */}
+          <Card>
+            <CardTitle>📅 Расписание</CardTitle>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <Input id="scheduleUrl" label="Ссылка на расписание" value={tInfo.scheduleUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleUrl: e.target.value }))} placeholder="https://..." />
+              </div>
+              <div className="md:col-span-2">
+                <Input id="scheduleDescription" label="Описание" value={tInfo.scheduleDescription ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleDescription: e.target.value }))} placeholder="Полное расписание матчей и мероприятий" />
+              </div>
+            </div>
+          </Card>
+
+          {/* Emergency & Notes */}
+          <Card>
+            <CardTitle>🚨 Экстренный контакт</CardTitle>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input id="emergencyContact" label="Имя / Должность" value={tInfo.emergencyContact ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyContact: e.target.value }))} placeholder="Иван Иванов, организатор" />
+              <Input id="emergencyPhone" label="Телефон" value={tInfo.emergencyPhone ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyPhone: e.target.value }))} placeholder="+372 5555 1234" />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Дополнительные заметки для команд</label>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
+                  value={tInfo.additionalNotes ?? ""}
+                  onChange={(e) => setTInfo((p) => ({ ...p, additionalNotes: e.target.value }))}
+                  placeholder="Важная информация для всех участников..."
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <SaveButton saving={infoSaving} saved={infoSaved} onClick={saveInfo} />
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

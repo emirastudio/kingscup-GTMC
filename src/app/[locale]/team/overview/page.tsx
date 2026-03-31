@@ -71,6 +71,7 @@ function AccommodationQuestCard({
   initial: Pick<OverviewData, "accomPlayers" | "accomStaff" | "accomAccompanying" | "accomCheckIn" | "accomCheckOut" | "accomNotes" | "accomDeclined" | "accomConfirmed">;
   onUpdate: () => void;
 }) {
+  const ta = useTranslations("overview.accom");
   const getInitialState = (): AccomState => {
     if (initial.accomConfirmed) return "confirmed";
     if (initial.accomDeclined) return "declined";
@@ -81,10 +82,10 @@ function AccommodationQuestCard({
   const [saving, setSaving] = useState(false);
   const [confirmDecline, setConfirmDecline] = useState(false);
 
-  // Form state
-  const [players, setPlayers] = useState(initial.accomPlayers ?? 0);
-  const [staff, setStaff] = useState(initial.accomStaff ?? 0);
-  const [accompanying, setAccompanying] = useState(initial.accomAccompanying ?? 0);
+  // Form state — strings to avoid "012" issue with number inputs
+  const [players, setPlayers] = useState(String(initial.accomPlayers ?? 0));
+  const [staff, setStaff] = useState(String(initial.accomStaff ?? 0));
+  const [accompanying, setAccompanying] = useState(String(initial.accomAccompanying ?? 0));
   const [checkIn, setCheckIn] = useState(initial.accomCheckIn ?? "");
   const [checkOut, setCheckOut] = useState(initial.accomCheckOut ?? "");
   const [notes, setNotes] = useState(initial.accomNotes ?? "");
@@ -116,17 +117,20 @@ function AccommodationQuestCard({
   }
 
   async function handleConfirm() {
+    const pNum = parseInt(players) || 0;
+    const sNum = parseInt(staff) || 0;
+    const aNum = parseInt(accompanying) || 0;
     await patch({
-      accomPlayers: players,
-      accomStaff: staff,
-      accomAccompanying: accompanying,
+      accomPlayers: pNum,
+      accomStaff: sNum,
+      accomAccompanying: aNum,
       accomCheckIn: checkIn || null,
       accomCheckOut: checkOut || null,
       accomNotes: notes || null,
       accomDeclined: false,
       accomConfirmed: true,
     });
-    setSummary({ players, staff, accompanying, checkIn, checkOut, notes });
+    setSummary({ players: pNum, staff: sNum, accompanying: aNum, checkIn, checkOut, notes });
     setState("confirmed");
   }
 
@@ -156,17 +160,17 @@ function AccommodationQuestCard({
     return (
       <div className="rounded-xl border-2 border-border bg-surface p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-xl">🏨</span>
+          <Hotel className="w-5 h-5 text-text-secondary shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-text-primary">Проживание не требуется</p>
-            <p className="text-xs text-text-secondary">Ваша команда отказалась от бронирования отеля</p>
+            <p className="text-sm font-semibold text-text-primary">{ta("declinedTitle")}</p>
+            <p className="text-xs text-text-secondary">{ta("declinedSubtitle")}</p>
           </div>
         </div>
         <button
           onClick={handleResetToUnanswered}
           className="text-xs text-navy hover:underline shrink-0 cursor-pointer"
         >
-          Изменить
+          {ta("editBtn")}
         </button>
       </div>
     );
@@ -178,19 +182,19 @@ function AccommodationQuestCard({
       <div className="rounded-xl border-2 border-success bg-emerald-50 p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <span className="text-2xl shrink-0">✅</span>
+            <CheckCircle className="w-6 h-6 text-success shrink-0 mt-0.5" />
             <div>
-              <p className="text-base font-bold text-emerald-800 mb-1">Бронирование подтверждено!</p>
+              <p className="text-base font-bold text-emerald-800 mb-1">{ta("confirmedTitle")}</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-emerald-700">
-                {summary.players > 0 && <span>{summary.players} игроков</span>}
-                {summary.staff > 0 && <span>{summary.staff} стаф</span>}
-                {summary.accompanying > 0 && <span>{summary.accompanying} сопровождающих</span>}
+                {summary.players > 0 && <span>{summary.players} {ta("players").toLowerCase()}</span>}
+                {summary.staff > 0 && <span>{summary.staff} {ta("staff").toLowerCase()}</span>}
+                {summary.accompanying > 0 && <span>{summary.accompanying} {ta("accompanying").toLowerCase()}</span>}
               </div>
               {(summary.checkIn || summary.checkOut) && (
                 <div className="mt-1.5 text-sm text-emerald-700">
-                  {summary.checkIn && <span>Заезд: {summary.checkIn}</span>}
+                  {summary.checkIn && <span>{ta("arrivalLabel")}: {summary.checkIn}</span>}
                   {summary.checkIn && summary.checkOut && <span> · </span>}
-                  {summary.checkOut && <span>Выезд: {summary.checkOut}</span>}
+                  {summary.checkOut && <span>{ta("departureLabel")}: {summary.checkOut}</span>}
                 </div>
               )}
               {summary.notes && (
@@ -202,7 +206,7 @@ function AccommodationQuestCard({
             onClick={handleEdit}
             className="text-xs text-emerald-700 border border-emerald-300 rounded-lg px-3 py-1.5 hover:bg-emerald-100 transition-colors shrink-0 cursor-pointer"
           >
-            Изменить
+            {ta("editBtn")}
           </button>
         </div>
       </div>
@@ -214,51 +218,45 @@ function AccommodationQuestCard({
     return (
       <div className="rounded-xl border-2 border-amber-400 bg-amber-50 p-5 space-y-5">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🏨</span>
+          <Hotel className="w-6 h-6 text-amber-700 shrink-0" />
           <div>
-            <p className="text-base font-bold text-amber-900">Бронирование проживания</p>
-            <p className="text-sm text-amber-700">Укажите количество мест и даты</p>
+            <p className="text-base font-bold text-amber-900">{ta("formTitle")}</p>
+            <p className="text-sm text-amber-700">{ta("formSubtitle")}</p>
           </div>
         </div>
 
         {/* Counts row */}
         <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-amber-800 mb-1">Игроки</label>
-            <input
-              type="number"
-              min={0}
-              value={players}
-              onChange={(e) => setPlayers(Number(e.target.value))}
-              className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-amber-800 mb-1">Стаф</label>
-            <input
-              type="number"
-              min={0}
-              value={staff}
-              onChange={(e) => setStaff(Number(e.target.value))}
-              className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-amber-800 mb-1">Сопровождающие</label>
-            <input
-              type="number"
-              min={0}
-              value={accompanying}
-              onChange={(e) => setAccompanying(Number(e.target.value))}
-              className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
-            />
-          </div>
+          {(
+            [
+              { label: ta("players"), val: players, set: setPlayers },
+              { label: ta("staff"), val: staff, set: setStaff },
+              { label: ta("accompanying"), val: accompanying, set: setAccompanying },
+            ] as { label: string; val: string; set: (v: string) => void }[]
+          ).map(({ label, val, set }) => (
+            <div key={label}>
+              <label className="block text-xs font-semibold text-amber-800 mb-1">{label}</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={val}
+                onFocus={(e) => { if (e.target.value === "0") set(""); }}
+                onBlur={(e) => { if (e.target.value === "") set("0"); }}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  set(raw === "" ? "" : String(parseInt(raw, 10)));
+                }}
+                className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+              />
+            </div>
+          ))}
         </div>
 
         {/* Dates row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-amber-800 mb-1">Дата заезда</label>
+            <label className="block text-xs font-semibold text-amber-800 mb-1">{ta("checkIn")}</label>
             <input
               type="date"
               value={checkIn}
@@ -267,7 +265,7 @@ function AccommodationQuestCard({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-amber-800 mb-1">Дата выезда</label>
+            <label className="block text-xs font-semibold text-amber-800 mb-1">{ta("checkOut")}</label>
             <input
               type="date"
               value={checkOut}
@@ -279,12 +277,12 @@ function AccommodationQuestCard({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-amber-800 mb-1">Дополнительные пожелания</label>
+          <label className="block text-xs font-semibold text-amber-800 mb-1">{ta("notes")}</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            placeholder="Особые пожелания, примечания..."
+            placeholder={ta("notesPlaceholder")}
             className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 resize-none"
           />
         </div>
@@ -296,13 +294,13 @@ function AccommodationQuestCard({
             disabled={saving}
             className="flex-1 bg-navy text-white font-semibold rounded-xl py-3 text-sm hover:bg-navy/90 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {saving ? "Сохраняем..." : "Подтвердить бронирование"}
+            {saving ? ta("saving") : ta("confirmBtn")}
           </button>
           <button
             onClick={() => setState("unanswered")}
             className="text-sm text-text-secondary hover:text-text-primary cursor-pointer"
           >
-            Отмена
+            {ta("cancel")}
           </button>
         </div>
       </div>
@@ -313,29 +311,29 @@ function AccommodationQuestCard({
   return (
     <div className="rounded-xl border-2 border-amber-400 bg-amber-50 p-5">
       <div className="flex items-start gap-3 mb-4">
-        <span className="text-2xl shrink-0">🏨</span>
+        <Hotel className="w-6 h-6 text-amber-700 shrink-0 mt-0.5" />
         <div>
-          <p className="text-base font-bold text-amber-900">Нужно ли вашей команде проживание?</p>
-          <p className="text-sm text-amber-700 mt-0.5">Срочно! Нам нужно знать количество мест для бронирования отеля.</p>
+          <p className="text-base font-bold text-amber-900">{ta("questTitle")}</p>
+          <p className="text-sm text-amber-700 mt-0.5">{ta("questSubtitle")}</p>
         </div>
       </div>
 
       {confirmDecline ? (
         <div className="rounded-lg bg-amber-100 border border-amber-300 p-4 space-y-3">
-          <p className="text-sm font-medium text-amber-900">Вы уверены, что проживание не нужно?</p>
+          <p className="text-sm font-medium text-amber-900">{ta("confirmDeclineQuestion")}</p>
           <div className="flex gap-2">
             <button
               onClick={handleDecline}
               disabled={saving}
               className="flex-1 bg-amber-600 text-white font-semibold rounded-lg py-2 text-sm hover:bg-amber-700 transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {saving ? "..." : "Да, не нужно"}
+              {saving ? "..." : ta("confirmDeclineYes")}
             </button>
             <button
               onClick={() => setConfirmDecline(false)}
               className="flex-1 border border-amber-400 text-amber-800 font-semibold rounded-lg py-2 text-sm hover:bg-amber-100 cursor-pointer"
             >
-              Назад
+              {ta("confirmDeclineBack")}
             </button>
           </div>
         </div>
@@ -343,15 +341,15 @@ function AccommodationQuestCard({
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => setState("form")}
-            className="flex-1 bg-navy text-white font-semibold rounded-xl py-3 text-sm hover:bg-navy/90 transition-colors cursor-pointer"
+            className="flex-1 bg-navy text-white font-semibold rounded-xl py-3 text-sm hover:bg-navy/90 transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
-            ✓ Да, нам нужно проживание
+            <CheckCircle className="w-4 h-4" /> {ta("yesBtn")}
           </button>
           <button
             onClick={() => setConfirmDecline(true)}
             className="flex-1 border-2 border-amber-400 text-amber-800 font-semibold rounded-xl py-3 text-sm hover:bg-amber-100 transition-colors cursor-pointer"
           >
-            Нам не нужно проживание
+            {ta("noBtn")}
           </button>
         </div>
       )}

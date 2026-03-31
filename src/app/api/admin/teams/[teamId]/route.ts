@@ -21,6 +21,7 @@ export async function PATCH(
 
   if (body.status !== undefined) updates.status = body.status;
   if (body.notes !== undefined) updates.notes = body.notes;
+  if (body.hotelId !== undefined) updates.hotelId = body.hotelId === "" ? null : body.hotelId;
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(
