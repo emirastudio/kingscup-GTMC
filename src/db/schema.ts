@@ -500,6 +500,7 @@ export const packageAssignments = pgTable("package_assignments", {
   freePlayersCount: integer("free_players_count").default(0).notNull(),
   freeStaffCount: integer("free_staff_count").default(0).notNull(),
   freeAccompanyingCount: integer("free_accompanying_count").default(0).notNull(),
+  mealsCountOverride: integer("meals_count_override"),
 });
 
 // ─── Team Service Overrides (per-team custom pricing) ───

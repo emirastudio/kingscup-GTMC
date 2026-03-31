@@ -74,6 +74,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (body.freePlayersCount !== undefined) updates.freePlayersCount = Number(body.freePlayersCount);
   if (body.freeStaffCount !== undefined) updates.freeStaffCount = Number(body.freeStaffCount);
   if (body.freeAccompanyingCount !== undefined) updates.freeAccompanyingCount = Number(body.freeAccompanyingCount);
+  if ("mealsCountOverride" in body) {
+    const v = body.mealsCountOverride;
+    updates.mealsCountOverride = (v === null || v === "" || v === -1) ? null : (parseInt(String(v)) || null);
+  }
 
   const [updated] = await db
     .update(packageAssignments)

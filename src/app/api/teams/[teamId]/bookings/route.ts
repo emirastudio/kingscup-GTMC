@@ -105,6 +105,7 @@ export async function GET(
       players: assignment.freePlayersCount ?? 0,
       staff: assignment.freeStaffCount ?? 0,
       accompanying: assignment.freeAccompanyingCount ?? 0,
+      mealsOverride: assignment.mealsCountOverride ?? null,
     },
   });
 }

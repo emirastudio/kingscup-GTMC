@@ -34,7 +34,7 @@ interface TeamReport {
   } | null;
   class: { id: number; name: string; minBirthYear: number | null; maxBirthYear: number | null } | null;
   people: { all: Person[]; counts: { players: number; staff: number; accompanying: number; total: number } };
-  package: { id: number; name: string; assignedAt: string; isPublished: boolean; accommodationOptionId: number | null; freePlayersCount: number; freeStaffCount: number; freeAccompanyingCount: number } | null;
+  package: { id: number; name: string; assignedAt: string; isPublished: boolean; accommodationOptionId: number | null; freePlayersCount: number; freeStaffCount: number; freeAccompanyingCount: number; mealsCountOverride: number | null } | null;
   bookings: Booking[];
   overrides: Override[];
   finance: { totalFromBookings: number; totalPaid: number; balance: number };
@@ -279,6 +279,9 @@ function PackagePricingCard({
   const [freePlayers, setFreePlayers] = useState(String(pkg?.freePlayersCount ?? 0));
   const [freeStaff, setFreeStaff] = useState(String(pkg?.freeStaffCount ?? 0));
   const [freeAccom, setFreeAccom] = useState(String(pkg?.freeAccompanyingCount ?? 0));
+  const [mealsOverride, setMealsOverride] = useState<string>(
+    pkg?.mealsCountOverride != null ? String(pkg.mealsCountOverride) : ""
+  );
   const [savingFree, setSavingFree] = useState(false);
   const [savedFree, setSavedFree] = useState(false);
 
@@ -293,6 +296,7 @@ function PackagePricingCard({
           freePlayersCount: parseInt(freePlayers) || 0,
           freeStaffCount: parseInt(freeStaff) || 0,
           freeAccompanyingCount: parseInt(freeAccom) || 0,
+          mealsCountOverride: mealsOverride === "" ? null : (parseInt(mealsOverride) || null),
         }),
       });
       await onRefresh();
@@ -659,12 +663,13 @@ function PackagePricingCard({
                 {savingFree ? "Saving…" : savedFree ? "✓ Saved" : "Save"}
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Players", value: freePlayers, set: setFreePlayers },
-                { label: "Staff / Coaches", value: freeStaff, set: setFreeStaff },
-                { label: "Accompanying", value: freeAccom, set: setFreeAccom },
-              ].map(({ label, value, set }) => (
+                { label: "Players", value: freePlayers, set: setFreePlayers, placeholder: undefined, isText: false },
+                { label: "Staff / Coaches", value: freeStaff, set: setFreeStaff, placeholder: undefined, isText: false },
+                { label: "Accompanying", value: freeAccom, set: setFreeAccom, placeholder: undefined, isText: false },
+                { label: "Meals in package", value: mealsOverride, set: setMealsOverride, placeholder: "default", isText: true },
+              ].map(({ label, value, set, placeholder, isText }) => (
                 <div key={label}>
                   <label className="block text-xs text-text-secondary mb-1">{label}</label>
                   <div className="flex items-center gap-1.5">
@@ -673,14 +678,22 @@ function PackagePricingCard({
                       min="0"
                       max="99"
                       value={value}
-                      onChange={(e) => set(String(parseInt(e.target.value) || 0))}
+                      placeholder={placeholder}
+                      onChange={(e) => {
+                        if (isText) {
+                          setMealsOverride(e.target.value);
+                        } else {
+                          set(String(parseInt(e.target.value) || 0));
+                        }
+                      }}
                       className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm font-semibold text-center focus:outline-none focus:border-navy"
                     />
-                    <span className="text-xs text-text-secondary">free</span>
+                    {!isText && <span className="text-xs text-text-secondary">free</span>}
                   </div>
                 </div>
               ))}
             </div>
+            <p className="text-xs text-text-secondary mt-1">Leave meals empty to use default (from accommodation option)</p>
             {(parseInt(freePlayers) > 0 || parseInt(freeStaff) > 0 || parseInt(freeAccom) > 0) && (
               <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs text-emerald-700">
                 The team will see: {[

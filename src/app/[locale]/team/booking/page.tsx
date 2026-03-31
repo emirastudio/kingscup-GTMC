@@ -70,7 +70,7 @@ type BookingData = {
   registration: RegistrationFee | null;
   bookings: SavedBooking[];
   overrides: ServiceOverride[];
-  freeSlots: { players: number; staff: number; accompanying: number };
+  freeSlots: { players: number; staff: number; accompanying: number; mealsOverride: number | null };
 };
 
 type SavedBooking = {
@@ -689,18 +689,21 @@ export default function BookingPage() {
                             </div>
                           </div>
 
-                          {(opt.includedMeals > 0 || mealNote) && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {opt.includedMeals > 0 && (
-                                <Badge variant="success">
-                                  {opt.includedMeals} {t("mealsIncluded")}
-                                </Badge>
-                              )}
-                              {mealNote && (
-                                <span className="text-xs text-text-secondary">{mealNote}</span>
-                              )}
-                            </div>
-                          )}
+                          {(() => {
+                            const effectiveMeals = data.freeSlots.mealsOverride ?? opt.includedMeals;
+                            return (effectiveMeals > 0 || mealNote) ? (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {effectiveMeals > 0 ? (
+                                  <Badge variant="success">
+                                    {effectiveMeals} {t("mealsIncluded")}
+                                  </Badge>
+                                ) : null}
+                                {mealNote && (
+                                  <span className="text-xs text-text-secondary">{mealNote}</span>
+                                )}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
 
                         {/* Quantity inputs shown when selected */}
