@@ -6,7 +6,7 @@ import { usePathname, Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Menu, X,
-  Mail, Shield, UserPlus, Plane, Shirt, FileText, UserCircle,
+  Mail, Shield, UserPlus, Plane, Building2, FileText, UserCircle,
 } from "lucide-react";
 import { useTeam } from "@/lib/team-context";
 
@@ -30,7 +30,7 @@ export function MobileNav() {
     { key: "staff",        icon: Shield,     href: "/team/staff" },
     { key: "accompanying", icon: UserPlus,   href: "/team/accompanying" },
     { key: "travel",       icon: Plane,      href: "/team/travel" },
-    { key: "jersey",       icon: Shirt,      href: "/team/jersey" },
+    { key: "club",         icon: Building2,  href: "/team/club" },
     { key: "documents",    icon: FileText,   href: "/team/documents" },
     { key: "profile",      icon: UserCircle, href: "/team/profile" },
   ];

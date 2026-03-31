@@ -72,7 +72,8 @@
     "payments": "Maksed",
     "services": "Teenused",
     "packages": "Paketid",
-    "profile": "Profiil"
+    "profile": "Profiil",
+    "club": "Klubi"
   },
   "team": {
     "regNumber": "Registreerimisnumber",
@@ -465,6 +466,17 @@
       "sentMessages": "Saadetud sõnumid",
       "noMessages": "Sõnumeid pole veel saadetud"
     }
+  },
+  "club": {
+    "title": "Klubi seaded",
+    "managersTitle": "Meeskonna haldurid",
+    "managersDesc": "Inimesed, kes saavad sisse logida ja hallata konkreetset meeskonda.",
+    "noManagers": "Meeskonna haldurid ei ole veel lisatud.",
+    "removeAccess": "Eemalda juurdepääs",
+    "confirmRemove": "Eemaldada see haldur?",
+    "removeYes": "Jah, eemalda",
+    "removeNo": "Tühista",
+    "inviteNew": "Kutsu meeskonna haldur"
   },
   "invite": {
     "loading": "Laadimine...",

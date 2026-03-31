@@ -13,7 +13,7 @@ import {
   Users,
   Shield,
   UserPlus,
-  Shirt,
+  Building2,
   FileText,
   UserCircle,
 } from "lucide-react";
@@ -58,7 +58,7 @@ export function TeamSidebar({ className }: TeamSidebarProps) {
     },
     {
       items: [
-        { key: "jersey", icon: Shirt, href: "/team/jersey" },
+        { key: "club", icon: Building2, href: "/team/club" },
         { key: "documents", icon: FileText, href: "/team/documents" },
         { key: "profile", icon: UserCircle, href: "/team/profile" },
       ],

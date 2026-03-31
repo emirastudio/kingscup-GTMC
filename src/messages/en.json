@@ -72,7 +72,8 @@
     "payments": "Payments",
     "services": "Services",
     "packages": "Packages",
-    "profile": "Profile"
+    "profile": "Profile",
+    "club": "Club"
   },
   "team": {
     "regNumber": "Registration number",
@@ -509,6 +510,17 @@
       "airportHotel": "Airport ↔ Hotel",
       "fullTransfer": "Full transfer"
     }
+  },
+  "club": {
+    "title": "Club Settings",
+    "managersTitle": "Team Managers",
+    "managersDesc": "People who can log in and manage a specific team.",
+    "noManagers": "No team managers added yet.",
+    "removeAccess": "Remove access",
+    "confirmRemove": "Remove this manager?",
+    "removeYes": "Yes, remove",
+    "removeNo": "Cancel",
+    "inviteNew": "Invite a Team Manager"
   },
   "invite": {
     "loading": "Loading...",
