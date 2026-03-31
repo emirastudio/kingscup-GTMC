@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { teamTravel } from "@/db/schema";
+import { teamTravel, teams } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
+
+async function authorizeTeamAccess(teamId: string) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  const tid = parseInt(teamId);
+  const team = await db.query.teams.findFirst({ where: eq(teams.id, tid) });
+  if (!team || team.clubId !== session.clubId) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { tid, team, session };
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const travel = await db.query.teamTravel.findFirst({
     where: eq(teamTravel.teamId, parseInt(teamId)),
   });
@@ -19,6 +36,9 @@ export async function POST(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const body = await req.json();
   const tid = parseInt(teamId);
 

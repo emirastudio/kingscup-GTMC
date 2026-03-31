@@ -16,11 +16,16 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
-  if (body.pricePerPerson !== undefined) body.pricePerPerson = String(body.pricePerPerson);
+  const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.pricePerPerson !== undefined) updates.pricePerPerson = String(body.pricePerPerson);
+  if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+  if (body.isActive !== undefined) updates.isActive = body.isActive;
 
   const [updated] = await db
     .update(extraMealOptions)
-    .set(body)
+    .set(updates)
     .where(eq(extraMealOptions.id, parseInt(id)))
     .returning();
 

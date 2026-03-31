@@ -2,14 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { teams, clubs, people, tournamentClasses } from "@/db/schema";
 import { eq, and, count } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 // Get all teams for a club
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ clubId: string }> }
 ) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { clubId } = await params;
   const cid = parseInt(clubId);
+
+  if (session.clubId !== cid) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const clubTeams = await db.query.teams.findMany({
     where: eq(teams.clubId, cid),
@@ -55,8 +65,18 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ clubId: string }> }
 ) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { clubId } = await params;
   const cid = parseInt(clubId);
+
+  if (session.clubId !== cid) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const body = await req.json();
 
   const club = await db.query.clubs.findFirst({

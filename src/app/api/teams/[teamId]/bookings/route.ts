@@ -137,23 +137,24 @@ export async function POST(
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // Delete existing bookings
-  await db.delete(teamBookings).where(eq(teamBookings.teamId, tid));
+  // Delete existing bookings and insert new ones atomically
+  await db.transaction(async (tx) => {
+    await tx.delete(teamBookings).where(eq(teamBookings.teamId, tid));
 
-  // Insert new ones
-  if (body.bookings.length > 0) {
-    const rows = body.bookings.map((b) => ({
-      teamId: tid,
-      bookingType: b.bookingType,
-      serviceId: b.serviceId,
-      quantity: b.quantity,
-      unitPrice: b.unitPrice,
-      total: (parseFloat(b.unitPrice) * b.quantity).toFixed(2),
-      notes: b.notes ?? null,
-    }));
+    if (body.bookings.length > 0) {
+      const rows = body.bookings.map((b) => ({
+        teamId: tid,
+        bookingType: b.bookingType,
+        serviceId: b.serviceId,
+        quantity: b.quantity,
+        unitPrice: b.unitPrice,
+        total: (parseFloat(b.unitPrice) * b.quantity).toFixed(2),
+        notes: b.notes ?? null,
+      }));
 
-    await db.insert(teamBookings).values(rows);
-  }
+      await tx.insert(teamBookings).values(rows);
+    }
+  });
 
   const saved = await db.query.teamBookings.findMany({
     where: eq(teamBookings.teamId, tid),

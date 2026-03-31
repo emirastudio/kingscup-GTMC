@@ -5,7 +5,7 @@ import {
   teams,
   clubs,
   tournamentClasses,
-  orders,
+  teamBookings,
   payments,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth";
@@ -44,14 +44,14 @@ export async function GET() {
       )
     );
 
-  // Pending payments: teams where sum(orders.total) > sum(received payments)
+  // Pending payments: teams where sum(team_bookings.total) > sum(received payments)
   const pendingPaymentsResult = await db.execute<{ value: string }>(sql`
     SELECT COUNT(*) AS value FROM (
       SELECT t.id
       FROM teams t
       LEFT JOIN (
         SELECT team_id, COALESCE(SUM(total::numeric), 0) AS order_total
-        FROM orders GROUP BY team_id
+        FROM team_bookings GROUP BY team_id
       ) o ON o.team_id = t.id
       LEFT JOIN (
         SELECT team_id, COALESCE(SUM(amount::numeric), 0) AS paid_total

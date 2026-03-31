@@ -2,16 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { orders, payments, teams, tournamentProducts, teamBookings } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { teamId } = await params;
   const tid = parseInt(teamId);
 
   const team = await db.query.teams.findFirst({ where: eq(teams.id, tid) });
   if (!team) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (team.clubId !== session.clubId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Get old-model orders with product names
   const teamOrders = await db

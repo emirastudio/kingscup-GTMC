@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { teams, people, teamBookings, teamTravel, payments, tournamentClasses, tournamentInfo, tournaments, tournamentHotels } from "@/db/schema";
+import { teams, people, teamBookings, orders, teamTravel, payments, tournamentClasses, tournamentInfo, tournaments, tournamentHotels } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { teamId } = await params;
   const tid = parseInt(teamId);
 
   const team = await db.query.teams.findFirst({ where: eq(teams.id, tid) });
   if (!team) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (team.clubId !== session.clubId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const teamClass = team.classId
     ? await db.query.tournamentClasses.findFirst({ where: eq(tournamentClasses.id, team.classId) })
@@ -39,11 +48,22 @@ export async function GET(
   const [transferCount] = await db.select({ count: count() }).from(people)
     .where(and(eq(people.teamId, tid), eq(people.needsTransfer, true)));
 
-  // Bookings total (new model)
-  const [orderTotal] = await db
+  // Sum from old orders model
+  const [legacyOrderTotal] = await db
+    .select({ total: sql<string>`COALESCE(SUM(${orders.total}::numeric), 0)` })
+    .from(orders)
+    .where(eq(orders.teamId, tid));
+
+  // Sum from new bookings model
+  const [bookingTotal] = await db
     .select({ total: sql<string>`COALESCE(SUM(${teamBookings.total}::numeric), 0)` })
     .from(teamBookings)
     .where(eq(teamBookings.teamId, tid));
+
+  // Combined total to match economy page (orders + teamBookings)
+  const orderTotal = {
+    total: (parseFloat(legacyOrderTotal?.total ?? "0") + parseFloat(bookingTotal?.total ?? "0")).toFixed(2),
+  };
 
   // Payments total
   const [paymentTotal] = await db

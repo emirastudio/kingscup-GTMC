@@ -16,15 +16,20 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
-  if (body.checkIn) body.checkIn = new Date(body.checkIn);
-  if (body.checkOut) body.checkOut = new Date(body.checkOut);
-  if (body.pricePerPlayer !== undefined) body.pricePerPlayer = String(body.pricePerPlayer);
-  if (body.pricePerStaff !== undefined) body.pricePerStaff = String(body.pricePerStaff);
-  if (body.pricePerAccompanying !== undefined) body.pricePerAccompanying = String(body.pricePerAccompanying);
+  const updates: Record<string, unknown> = {};
+  if (body.name !== undefined) updates.name = body.name;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.checkIn !== undefined) updates.checkIn = body.checkIn ? new Date(body.checkIn) : null;
+  if (body.checkOut !== undefined) updates.checkOut = body.checkOut ? new Date(body.checkOut) : null;
+  if (body.pricePerPlayer !== undefined) updates.pricePerPlayer = String(body.pricePerPlayer);
+  if (body.pricePerStaff !== undefined) updates.pricePerStaff = String(body.pricePerStaff);
+  if (body.pricePerAccompanying !== undefined) updates.pricePerAccompanying = String(body.pricePerAccompanying);
+  if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+  if (body.isActive !== undefined) updates.isActive = body.isActive;
 
   const [updated] = await db
     .update(accommodationOptions)
-    .set(body)
+    .set(updates)
     .where(eq(accommodationOptions.id, parseInt(id)))
     .returning();
 

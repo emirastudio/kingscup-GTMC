@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { people } from "@/db/schema";
+import { people, teams } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+
+async function authorizeTeamAccess(teamId: string) {
+  const session = await getSession();
+  if (!session || session.role !== "club" || !session.clubId) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  const tid = parseInt(teamId);
+  const team = await db.query.teams.findFirst({ where: eq(teams.id, tid) });
+  if (!team || team.clubId !== session.clubId) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { tid, team, session };
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const type = req.nextUrl.searchParams.get("type"); // player, staff, accompanying
 
   const conditions = [eq(people.teamId, parseInt(teamId))];
@@ -29,6 +45,9 @@ export async function POST(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const body = await req.json();
 
   const [person] = await db
@@ -62,6 +81,9 @@ export async function PATCH(
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const personId = req.nextUrl.searchParams.get("id");
   if (!personId) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -97,6 +119,10 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
+  const { teamId } = await params;
+  const auth = await authorizeTeamAccess(teamId);
+  if ("error" in auth) return auth.error;
+
   const personId = req.nextUrl.searchParams.get("id");
   if (!personId) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -105,7 +131,7 @@ export async function DELETE(
   await db.delete(people).where(
     and(
       eq(people.id, parseInt(personId)),
-      eq(people.teamId, parseInt((await params).teamId))
+      eq(people.teamId, parseInt(teamId))
     )
   );
 

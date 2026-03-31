@@ -6,7 +6,7 @@ import {
   clubs,
   tournamentClasses,
   people,
-  orders,
+  teamBookings,
   payments,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth";
@@ -51,7 +51,7 @@ export async function GET() {
         WHERE people.team_id = ${teams.id} AND people.person_type IN ('staff', 'accompanying')
       )`.as("staff_count"),
       orderTotal: sql<string>`COALESCE((
-        SELECT SUM(total::numeric) FROM orders WHERE orders.team_id = ${teams.id}
+        SELECT SUM(total::numeric) FROM team_bookings WHERE team_bookings.team_id = ${teams.id}
       ), 0)`.as("order_total"),
       paidTotal: sql<string>`COALESCE((
         SELECT SUM(amount::numeric) FROM payments
