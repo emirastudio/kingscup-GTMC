@@ -6,8 +6,8 @@ import { TeamProvider } from "@/lib/team-context";
 import { SiteFooter } from "@/components/ui/site-footer";
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
-import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads, tournaments } from "@/db/schema";
-import { eq, and, count, sql, notInArray } from "drizzle-orm";
+import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads, messageRecipients, tournaments } from "@/db/schema";
+import { eq, and, count, sql, notInArray, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
@@ -70,19 +70,31 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
   // Default to first team
   const activeTeam = enrichedTeams[0];
 
-  // Unread inbox count for active team
+  // Unread inbox count for active team (only messages visible to this team)
   let inboxCount = 0;
   if (activeTeam) {
-    const allMessages = await db.query.inboxMessages.findMany({
-      where: eq(inboxMessages.tournamentId, club.tournamentId),
-      columns: { id: true },
-    });
-    const readMessages = await db.query.teamMessageReads.findMany({
-      where: eq(teamMessageReads.teamId, activeTeam.id),
-      columns: { messageId: true },
-    });
-    const readIds = new Set(readMessages.map((r) => r.messageId));
-    inboxCount = allMessages.filter((m) => !readIds.has(m.id)).length;
+    const [countRow] = await db
+      .select({ value: sql<number>`COUNT(*)` })
+      .from(inboxMessages)
+      .where(
+        and(
+          eq(inboxMessages.tournamentId, club.tournamentId),
+          or(
+            eq(inboxMessages.sendToAll, true),
+            sql`EXISTS (
+              SELECT 1 FROM ${messageRecipients}
+              WHERE ${messageRecipients.messageId} = ${inboxMessages.id}
+              AND ${messageRecipients.teamId} = ${activeTeam.id}
+            )`
+          ),
+          sql`NOT EXISTS (
+            SELECT 1 FROM ${teamMessageReads}
+            WHERE ${teamMessageReads.messageId} = ${inboxMessages.id}
+            AND ${teamMessageReads.teamId} = ${activeTeam.id}
+          )`
+        )
+      );
+    inboxCount = Number(countRow?.value ?? 0);
   }
 
   return (
