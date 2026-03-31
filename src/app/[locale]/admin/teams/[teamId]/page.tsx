@@ -164,8 +164,8 @@ function todayISO() { return new Date().toISOString().split("T")[0]; }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatTile({ label, value, sub, color = "default" }: {
-  label: string; value: string | number; sub?: string;
+function StatTile({ label, value, sub, detail, color = "default" }: {
+  label: string; value: string | number; sub?: string; detail?: string;
   color?: "default" | "green" | "red" | "amber";
 }) {
   const colors = {
@@ -185,6 +185,7 @@ function StatTile({ label, value, sub, color = "default" }: {
       <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">{label}</p>
       <p className={`text-2xl font-bold mt-1 ${textColors[color]}`}>{value}</p>
       {sub && <p className="text-xs text-text-secondary mt-0.5">{sub}</p>}
+      {detail && <p className="text-xs text-text-secondary/70 mt-1">{detail}</p>}
     </div>
   );
 }
@@ -957,6 +958,15 @@ export default function AdminTeamDetailPage() {
               return parts.length ? parts.join(" → ") : "confirmed";
             }
             return "not answered";
+          })()}
+          detail={(() => {
+            const t = team;
+            if (!t.accomConfirmed) return undefined;
+            const parts: string[] = [];
+            if (t.accomPlayers) parts.push(`${t.accomPlayers} players`);
+            if (t.accomStaff) parts.push(`${t.accomStaff} staff`);
+            if (t.accomAccompanying) parts.push(`${t.accomAccompanying} accompanying`);
+            return parts.length ? parts.join(" + ") : undefined;
           })()}
           color={team.accomConfirmed ? "green" : team.accomDeclined ? "default" : "default"}
         />
