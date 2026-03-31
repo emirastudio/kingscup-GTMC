@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { tournaments, teams, clubs, payments } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { eq, and, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   const session = await getSession();
@@ -112,4 +112,63 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json(updated);
+}
+
+export async function PUT(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { id, teamId, amount, method, status, reference, notes, receivedAt } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const [updated] = await db
+    .update(payments)
+    .set({
+      teamId: teamId ? Number(teamId) : undefined,
+      amount: amount !== undefined ? String(amount) : undefined,
+      method: method ?? undefined,
+      status: status ?? undefined,
+      reference: reference !== undefined ? (reference || null) : undefined,
+      notes: notes !== undefined ? (notes || null) : undefined,
+      receivedAt: receivedAt !== undefined ? (receivedAt ? new Date(receivedAt) : null) : undefined,
+    })
+    .where(eq(payments.id, id))
+    .returning();
+
+  if (!updated) {
+    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(updated);
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const [deleted] = await db
+    .delete(payments)
+    .where(eq(payments.id, Number(id)))
+    .returning();
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
 }
