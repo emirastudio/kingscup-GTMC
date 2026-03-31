@@ -90,7 +90,6 @@ type AccommodationBooking = {
   players: number;
   staff: number;
   accompanying: number;
-  mealsNeeded: number;
 };
 
 type MealBooking = {
@@ -263,7 +262,6 @@ export default function BookingPage() {
     players: 0,
     staff: 0,
     accompanying: 0,
-    mealsNeeded: 0,
   });
   const [meals, setMeals] = useState<Map<number, MealBooking>>(new Map());
   const [transfer, setTransfer] = useState<TransferBooking>({
@@ -296,13 +294,11 @@ export default function BookingPage() {
             const findQty = (key: string) =>
               (accRows.find((r) => r.notes === key)?.quantity ?? 0) +
               (accRows.find((r) => r.notes === `${key}_free`)?.quantity ?? 0);
-            const mealsRow = accRows.find((r) => r.notes === "meals_needed");
             setAccommodation({
               optionId: optId,
               players: findQty("players"),
               staff: findQty("staff"),
               accompanying: findQty("accompanying"),
-              mealsNeeded: mealsRow?.quantity ?? 0,
             });
           }
 
@@ -454,16 +450,6 @@ export default function BookingPage() {
               notes: `${row.key}_free`,
             });
           }
-        }
-        // Save meals count as a separate record (informational for organizer)
-        if (opt.includedMeals > 0 && accommodation.mealsNeeded > 0) {
-          bookings.push({
-            bookingType: "accommodation",
-            serviceId: opt.id,
-            quantity: accommodation.mealsNeeded,
-            unitPrice: "0.00",
-            notes: "meals_needed",
-          });
         }
       }
     }
@@ -653,15 +639,10 @@ export default function BookingPage() {
                       <div
                         key={opt.id}
                         onClick={() =>
-                          setAccommodation((prev) => {
-                            const deselecting = prev.optionId === opt.id;
-                            return {
-                              ...prev,
-                              optionId: deselecting ? null : opt.id,
-                              // auto-init meals to total people when selecting a new option
-                              mealsNeeded: deselecting ? 0 : (prev.mealsNeeded > 0 ? prev.mealsNeeded : prev.players + prev.staff + prev.accompanying),
-                            };
-                          })
+                          setAccommodation((prev) => ({
+                            ...prev,
+                            optionId: prev.optionId === opt.id ? null : opt.id,
+                          }))
                         }
                         className={`rounded-xl border-2 cursor-pointer transition-all ${
                           selected
@@ -750,18 +731,6 @@ export default function BookingPage() {
                                   setAccommodation((prev) => ({ ...prev, accompanying: v }))
                                 }
                               />
-                            )}
-                            {opt.includedMeals > 0 && (
-                              <div className="pt-3 border-t border-border">
-                                <QtyInput
-                                  label={`🍽 ${t("mealsPersonsLabel")} (${opt.includedMeals} ${t("mealsIncluded")})`}
-                                  value={accommodation.mealsNeeded}
-                                  onChange={(v) =>
-                                    setAccommodation((prev) => ({ ...prev, mealsNeeded: v }))
-                                  }
-                                />
-                                <p className="text-xs text-text-secondary mt-1 ml-1">{t("mealsPersonsHint")}</p>
-                              </div>
                             )}
                             {accomTotal > 0 && (
                               <div className="pt-2 border-t border-border flex justify-between text-sm font-medium">
@@ -1155,10 +1124,6 @@ function SummaryTable({
       if (freeS > 0) rows.push({ label: `${optName} — ${t("staff")} 🎁`, qty: `${freeS}`, unitPrice: "€0.00", total: 0 });
       if (freeA > 0) rows.push({ label: `${optName} — ${t("accompanying")} 🎁`, qty: `${freeA}`, unitPrice: "€0.00", total: 0 });
 
-      // Included meals (informational)
-      if (opt.includedMeals > 0 && accommodation.mealsNeeded > 0) {
-        rows.push({ label: `🍽 ${t("mealsPersonsLabel")} (${opt.includedMeals} ${t("mealsIncluded")})`, qty: `${accommodation.mealsNeeded}`, unitPrice: t("included"), total: 0 });
-      }
     }
   }
 
