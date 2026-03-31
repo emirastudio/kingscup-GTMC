@@ -337,7 +337,7 @@
         "hint": "Answer the accommodation question above — confirm whether your team needs a hotel or not.",
         "action": "Answer above"
       }
-    }
+    },
     "financeSummary": "Finance Summary",
     "totalOrdered": "Total ordered",
     "totalPaid": "Paid",

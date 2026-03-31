@@ -317,7 +317,7 @@
     "responsiblePerson": "Vastutav isik kohapeal",
     "checklist": {
       "hasPlayers": {
-        "hint": "Lisa vähemalt üks mängija. Mängijad registreeritakse lehel „Mängijad".",
+        "hint": "Lisa vähemalt üks mängija. Mängijad registreeritakse lehel \"Mängijad\".",
         "action": "Lisa mängijad"
       },
       "hasStaff": {
@@ -325,7 +325,7 @@
         "action": "Lisa personal"
       },
       "hasResponsible": {
-        "hint": "Määra töötaja kohapeal vastutavaks. Ava personali leht ja märgi „Vastutav kohapeal".",
+        "hint": "Määra töötaja kohapeal vastutavaks. Ava personali leht ja märgi \"Vastutav kohapeal\".",
         "action": "Määra"
       },
       "hasTravel": {
@@ -336,7 +336,7 @@
         "hint": "Vasta ülal olevale majutusküsimusele — kinnita, kas meeskond vajab hotelli.",
         "action": "Vasta ülal"
       }
-    }
+    },
     "financeSummary": "Finantsülevaade",
     "totalOrdered": "Tellitud",
     "totalPaid": "Makstud",
