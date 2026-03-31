@@ -372,8 +372,7 @@ export default function BookingPage() {
     const price = parseFloat(
       effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides)
     );
-    if (price === 0) return 0;
-    return price * transfer.persons;
+    return price; // flat per-team price
   }, [data, transfer]);
 
   const registrationTotal = useCallback((): number => {
@@ -468,14 +467,14 @@ export default function BookingPage() {
       });
     }
 
-    // Transfer — per person price
-    if (transfer.optionId !== null && transfer.persons > 0) {
+    // Transfer — flat per-team price
+    if (transfer.optionId !== null) {
       const opt = data.transfers.find((tr) => tr.id === transfer.optionId);
       if (opt) {
         bookings.push({
           bookingType: "transfer",
           serviceId: opt.id,
-          quantity: transfer.persons,
+          quantity: 1,
           unitPrice: effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides),
         });
       }
@@ -952,30 +951,11 @@ export default function BookingPage() {
                                 <p className="text-sm font-semibold text-navy">
                                   {fmtPrice(price)}
                                 </p>
-                                <p className="text-xs text-text-secondary">{t("perPerson")}</p>
+                                <p className="text-xs text-text-secondary">{t("perTeam")}</p>
                               </div>
                             )}
                           </div>
                         </div>
-                        {selected && !isFree && (
-                          <div
-                            className="border-t border-navy/10 p-4 space-y-3"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <QtyInput
-                              label={t("persons")}
-                              value={transfer.persons}
-                              min={1}
-                              onChange={(v) => setTransfer((prev) => ({ ...prev, persons: v }))}
-                            />
-                            {xferTotal > 0 && (
-                              <div className="pt-2 border-t border-border flex justify-between text-sm font-medium">
-                                <span className="text-text-secondary">{t("subtotal")}</span>
-                                <span className="text-navy">{fmtPrice(xferTotal)}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -1149,8 +1129,8 @@ function SummaryTable({
     });
   }
 
-  // Transfer
-  if (transfer.optionId !== null && transfer.persons > 0) {
+  // Transfer — flat per team
+  if (transfer.optionId !== null) {
     const opt = data.transfers.find((tr) => tr.id === transfer.optionId);
     if (opt) {
       const price = parseFloat(
@@ -1159,9 +1139,9 @@ function SummaryTable({
       const isFreeTransfer = price === 0;
       rows.push({
         label: isFreeTransfer ? `${getLocalName(opt, locale)} 🎁` : getLocalName(opt, locale),
-        qty: isFreeTransfer ? "—" : `${transfer.persons}`,
+        qty: "1",
         unitPrice: isFreeTransfer ? "€0.00" : fmtPrice(price),
-        total: price * transfer.persons,
+        total: price,
       });
     }
   }
