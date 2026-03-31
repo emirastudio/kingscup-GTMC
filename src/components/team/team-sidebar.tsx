@@ -91,10 +91,7 @@ export function TeamSidebar({ className, inboxCount }: TeamSidebarProps) {
                     <Icon className="w-4 h-4" />
                     <span className="flex-1">{t(key)}</span>
                     {badge !== undefined && badge > 0 && (
-                      <span className={cn(
-                        "text-[10px] rounded-full px-1.5 py-0.5 font-semibold",
-                        isActive ? "bg-white/20 text-white" : "bg-gold text-white"
-                      )}>
+                      <span className="text-[10px] rounded-full px-1.5 py-0.5 font-semibold bg-gold text-white">
                         {badge}
                       </span>
                     )}

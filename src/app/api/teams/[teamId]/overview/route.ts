@@ -42,11 +42,13 @@ export async function GET(
   // Travel
   const travel = await db.query.teamTravel.findFirst({ where: eq(teamTravel.teamId, tid) });
 
-  // Hotel & transfer counts
-  const [hotelCount] = await db.select({ count: count() }).from(people)
-    .where(and(eq(people.teamId, tid), eq(people.needsHotel, true)));
-  const [transferCount] = await db.select({ count: count() }).from(people)
-    .where(and(eq(people.teamId, tid), eq(people.needsTransfer, true)));
+  // Hotel & transfer — check if team has booked via teamBookings
+  const [accomBookingRow] = await db.select({ count: count() }).from(teamBookings)
+    .where(and(eq(teamBookings.teamId, tid), eq(teamBookings.bookingType, "accommodation")));
+  const [transferBookingRow] = await db.select({ count: count() }).from(teamBookings)
+    .where(and(eq(teamBookings.teamId, tid), eq(teamBookings.bookingType, "transfer")));
+  const hotelCount = { count: Number(accomBookingRow?.count ?? 0) > 0 ? 1 : 0 };
+  const transferCount = { count: Number(transferBookingRow?.count ?? 0) > 0 ? 1 : 0 };
 
   // Sum from old orders model
   const [legacyOrderTotal] = await db
@@ -84,9 +86,12 @@ export async function GET(
       : Promise.resolve(null),
   ]);
 
-  // Allergies list
+  // Allergies & dietary list (anyone with allergies OR dietary requirements)
   const allergies = await db.query.people.findMany({
-    where: and(eq(people.teamId, tid), sql`${people.allergies} IS NOT NULL AND ${people.allergies} != ''`),
+    where: and(
+      eq(people.teamId, tid),
+      sql`(COALESCE(${people.allergies}, '') != '' OR COALESCE(${people.dietaryRequirements}, '') != '')`
+    ),
     columns: { firstName: true, lastName: true, allergies: true, dietaryRequirements: true },
   });
 

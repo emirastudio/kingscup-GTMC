@@ -603,7 +603,9 @@ export default function TeamOverviewPage() {
             {allergies.map((a, i) => (
               <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-warning-light">
                 <span className="text-sm font-medium">{a.firstName} {a.lastName}</span>
-                <span className="text-sm text-text-secondary">— {a.allergies}</span>
+                {a.allergies && (
+                  <span className="text-sm text-text-secondary">— {a.allergies}</span>
+                )}
                 {a.dietaryRequirements && (
                   <Badge variant="warning">{a.dietaryRequirements}</Badge>
                 )}
