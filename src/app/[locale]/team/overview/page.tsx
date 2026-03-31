@@ -369,6 +369,7 @@ export default function TeamOverviewPage() {
   }
 
   useEffect(() => {
+    setData(null); // сбросить старые данные при смене команды
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamId]);
@@ -393,6 +394,7 @@ export default function TeamOverviewPage() {
       {/* ── Accommodation Quest Card ── */}
       {teamId && (
         <AccommodationQuestCard
+          key={teamId}
           teamId={String(teamId)}
           initial={{
             accomPlayers: data.accomPlayers,

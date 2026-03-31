@@ -36,21 +36,21 @@ export default function TravelPage() {
 
   useEffect(() => {
     if (!teamId) return;
+    // Сбросить форму при смене команды
+    setForm({ arrivalType: "", arrivalDate: "", arrivalTime: "", arrivalDetails: "", departureType: "", departureDate: "", departureTime: "", departureDetails: "" });
     fetch(`/api/teams/${teamId}/travel`).then(async (res) => {
       if (res.ok) {
         const data = await res.json();
-        if (data.arrivalDate || data.departureDate || data.arrivalType || data.departureType) {
-          setForm({
-            arrivalType: data.arrivalType ?? "",
-            arrivalDate: data.arrivalDate ? new Date(data.arrivalDate).toISOString().split("T")[0] : "",
-            arrivalTime: data.arrivalTime ?? "",
-            arrivalDetails: data.arrivalDetails ?? "",
-            departureType: data.departureType ?? "",
-            departureDate: data.departureDate ? new Date(data.departureDate).toISOString().split("T")[0] : "",
-            departureTime: data.departureTime ?? "",
-            departureDetails: data.departureDetails ?? "",
-          });
-        }
+        setForm({
+          arrivalType: data.arrivalType ?? "",
+          arrivalDate: data.arrivalDate ? new Date(data.arrivalDate).toISOString().split("T")[0] : "",
+          arrivalTime: data.arrivalTime ?? "",
+          arrivalDetails: data.arrivalDetails ?? "",
+          departureType: data.departureType ?? "",
+          departureDate: data.departureDate ? new Date(data.departureDate).toISOString().split("T")[0] : "",
+          departureTime: data.departureTime ?? "",
+          departureDetails: data.departureDetails ?? "",
+        });
       }
     });
   }, [teamId]);
