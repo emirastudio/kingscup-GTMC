@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
@@ -360,19 +360,27 @@ export default function TeamOverviewPage() {
   const tn = useTranslations("nav");
   const { teamId } = useTeam();
   const [data, setData] = useState<OverviewData | null>(null);
+  const activeTeamIdRef = useRef(teamId);
+
+  useEffect(() => {
+    if (!teamId) return;
+    activeTeamIdRef.current = teamId;
+    let cancelled = false;
+    setData(null);
+    fetch(`/api/teams/${teamId}/overview`).then(async (r) => {
+      if (!cancelled && r.ok) setData(await r.json());
+    });
+    return () => { cancelled = true; };
+  }, [teamId]);
 
   function fetchData() {
     if (!teamId) return;
-    fetch(`/api/teams/${teamId}/overview`).then(async (r) => {
-      if (r.ok) setData(await r.json());
+    const tid = teamId;
+    fetch(`/api/teams/${tid}/overview`).then(async (r) => {
+      // Игнорировать ответ если команда уже изменилась
+      if (r.ok && activeTeamIdRef.current === tid) setData(await r.json());
     });
   }
-
-  useEffect(() => {
-    setData(null); // сбросить старые данные при смене команды
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId]);
 
   if (!data) return null;
 
