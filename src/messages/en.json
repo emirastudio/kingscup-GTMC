@@ -219,7 +219,9 @@
     "selfOrganized": "Self-organized / own transport",
     "perPerson": "per person",
     "perTeam": "per team",
-    "perDay": "Per day"
+    "perDay": "Per day",
+    "complimentary": "Complimentary",
+    "transferPersons": "Number of persons"
   },
   "economy": {
     "title": "Economy",

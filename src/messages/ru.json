@@ -219,7 +219,9 @@
     "selfOrganized": "Самостоятельно / свой транспорт",
     "perPerson": "с человека",
     "perTeam": "за команду",
-    "perDay": "В день"
+    "perDay": "В день",
+    "complimentary": "Бесплатно (подарок)",
+    "transferPersons": "Количество человек"
   },
   "economy": {
     "title": "Финансы",

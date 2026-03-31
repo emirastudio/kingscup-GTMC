@@ -188,7 +188,9 @@
     "healthDisclaimerTitle": "Tervise- ja ohutusteade",
     "healthDisclaimer": "Osalev klubi vastutab täielikult kõigi registreeritud osalejate — mängijate, personali ja saatjate — tervise, ohutuse ja heaolu eest kogu turniiri vältel. Palun veenduge, et kõik terviseseisundid, allergiad ja toitumise erinõuded on korrektselt esitatud. Turniiri korraldaja ei vastuta avaldamata või ebakorrektselt esitatud meditsiinilisest teabest tulenevate vahejuhtumite eest.",
     "personName": "Nimi",
-    "personType": "Roll"
+    "personType": "Roll",
+    "complimentary": "Tasuta (kingitus)",
+    "transferPersons": "Isikute arv"
   },
   "economy": {
     "title": "Majandus",

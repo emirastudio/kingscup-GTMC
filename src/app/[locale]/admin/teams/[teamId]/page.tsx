@@ -368,6 +368,28 @@ function PackagePricingCard({
     return overrides.find((o) => o.serviceType === serviceType && o.serviceId === serviceId) ?? null;
   }
 
+  async function giftTransfer(serviceId: number) {
+    const existing = overrides.find((o) => o.serviceType === "transfer" && o.serviceId === serviceId);
+    const isAlreadyFree = existing && (parseFloat(existing.customPrice ?? "1") === 0);
+    const key = `transfer-${serviceId}`;
+    setSavingKey(key);
+    try {
+      if (existing) {
+        await fetch(`/api/admin/teams/${teamId}/overrides?id=${existing.id}`, { method: "DELETE" });
+      }
+      if (!isAlreadyFree) {
+        await fetch(`/api/admin/teams/${teamId}/overrides`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceType: "transfer", serviceId, customPrice: 0 }),
+        });
+      }
+      await onRefresh();
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
   function effectivePrice(serviceType: string, serviceId: number, basePrice: number): number {
     const ov = getOverride(serviceType, serviceId);
     if (ov?.customPrice) return parseFloat(ov.customPrice);
@@ -575,7 +597,20 @@ function PackagePricingCard({
                     </td>
                     <td className="py-2.5 pr-3 text-xs text-text-secondary">Per team</td>
                     <td className="py-2.5 text-right">
-                      {PriceCell({ rowKey: `transfer-${t.id}`, serviceType: "transfer", serviceId: t.id, basePrice: parseFloat(t.pricePerPerson) })}
+                      <div className="flex items-center justify-end gap-2">
+                        {PriceCell({ rowKey: `transfer-${t.id}`, serviceType: "transfer", serviceId: t.id, basePrice: parseFloat(t.pricePerPerson) })}
+                        <button
+                          onClick={() => giftTransfer(t.id)}
+                          title={effectivePrice("transfer", t.id, parseFloat(t.pricePerPerson)) === 0 ? "Remove gift — restore price" : "Gift this transfer (set to free)"}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                            effectivePrice("transfer", t.id, parseFloat(t.pricePerPerson)) === 0
+                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                              : "bg-surface border-border text-text-secondary hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700"
+                          }`}
+                        >
+                          🎁
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

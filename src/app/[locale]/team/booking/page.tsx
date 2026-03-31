@@ -287,11 +287,13 @@ export default function BookingPage() {
           void staffBooking;
 
           // Accommodation: multiple rows per option (players, staff, accompanying)
+          // Notes: "players", "staff", "accompanying" (paid) or "players_free", "staff_free", "accompanying_free" (complimentary)
           const accRows = json.bookings.filter((b) => b.bookingType === "accommodation");
           if (accRows.length > 0) {
             const optId = accRows[0].serviceId;
-            const findQty = (notes?: string) =>
-              accRows.find((r) => r.notes === notes)?.quantity ?? 0;
+            const findQty = (key: string) =>
+              (accRows.find((r) => r.notes === key)?.quantity ?? 0) +
+              (accRows.find((r) => r.notes === `${key}_free`)?.quantity ?? 0);
             setAccommodation({
               optionId: optId,
               players: findQty("players"),
@@ -316,7 +318,7 @@ export default function BookingPage() {
           // Transfer
           const xferRow = json.bookings.find((b) => b.bookingType === "transfer");
           if (xferRow) {
-            setTransfer({ optionId: xferRow.serviceId, persons: 1 });
+            setTransfer({ optionId: xferRow.serviceId, persons: xferRow.quantity || 1 });
           }
         }
       })
@@ -338,10 +340,14 @@ export default function BookingPage() {
     const accompPrice = parseFloat(
       effectivePrice("accommodation", opt.id, opt.pricePerAccompanying, data.overrides)
     );
+    // Deduct complimentary (free) slots
+    const chargedPlayers = Math.max(0, accommodation.players - data.freeSlots.players);
+    const chargedStaff = Math.max(0, accommodation.staff - data.freeSlots.staff);
+    const chargedAccom = Math.max(0, accommodation.accompanying - data.freeSlots.accompanying);
     return (
-      playerPrice * accommodation.players +
-      staffPrice * accommodation.staff +
-      accompPrice * accommodation.accompanying
+      playerPrice * chargedPlayers +
+      staffPrice * chargedStaff +
+      accompPrice * chargedAccom
     );
   }, [data, accommodation]);
 
@@ -366,7 +372,8 @@ export default function BookingPage() {
     const price = parseFloat(
       effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides)
     );
-    return price; // flat per-team price
+    if (price === 0) return 0;
+    return price * transfer.persons;
   }, [data, transfer]);
 
   const registrationTotal = useCallback((): number => {
@@ -413,22 +420,34 @@ export default function BookingPage() {
     }
 
     // Accommodation — store as separate rows per person type for clarity
+    // Free-slot rows are stored with notes like "players_free" at €0.00
     if (accommodation.optionId !== null) {
       const opt = data.accommodation.find((a) => a.id === accommodation.optionId);
       if (opt) {
-        const rows: Array<{ key: "players" | "staff" | "accompanying"; basePrice: string; qty: number }> = [
-          { key: "players", basePrice: opt.pricePerPlayer, qty: accommodation.players },
-          { key: "staff", basePrice: opt.pricePerStaff, qty: accommodation.staff },
-          { key: "accompanying", basePrice: opt.pricePerAccompanying, qty: accommodation.accompanying },
+        const accomRows: Array<{ key: "players" | "staff" | "accompanying"; basePrice: string; qty: number; freeQty: number }> = [
+          { key: "players", basePrice: opt.pricePerPlayer, qty: accommodation.players, freeQty: data.freeSlots.players },
+          { key: "staff", basePrice: opt.pricePerStaff, qty: accommodation.staff, freeQty: data.freeSlots.staff },
+          { key: "accompanying", basePrice: opt.pricePerAccompanying, qty: accommodation.accompanying, freeQty: data.freeSlots.accompanying },
         ];
-        for (const row of rows) {
-          if (row.qty > 0) {
+        for (const row of accomRows) {
+          const usedFree = Math.min(row.qty, row.freeQty);
+          const paidQty = Math.max(0, row.qty - usedFree);
+          if (paidQty > 0) {
             bookings.push({
               bookingType: "accommodation",
               serviceId: opt.id,
-              quantity: row.qty,
+              quantity: paidQty,
               unitPrice: effectivePrice("accommodation", opt.id, row.basePrice, data.overrides),
               notes: row.key,
+            });
+          }
+          if (usedFree > 0) {
+            bookings.push({
+              bookingType: "accommodation",
+              serviceId: opt.id,
+              quantity: usedFree,
+              unitPrice: "0.00",
+              notes: `${row.key}_free`,
             });
           }
         }
@@ -449,14 +468,14 @@ export default function BookingPage() {
       });
     }
 
-    // Transfer — flat per-team price
-    if (transfer.optionId !== null) {
+    // Transfer — per person price
+    if (transfer.optionId !== null && transfer.persons > 0) {
       const opt = data.transfers.find((tr) => tr.id === transfer.optionId);
       if (opt) {
         bookings.push({
           bookingType: "transfer",
           serviceId: opt.id,
-          quantity: 1,
+          quantity: transfer.persons,
           unitPrice: effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides),
         });
       }
@@ -891,8 +910,8 @@ export default function BookingPage() {
                         key={opt.id}
                         onClick={() =>
                           setTransfer((prev) => ({
-                            ...prev,
                             optionId: prev.optionId === opt.id ? null : opt.id,
+                            persons: prev.optionId === opt.id ? 0 : (prev.persons > 0 ? prev.persons : 1),
                           }))
                         }
                         className={`rounded-xl border-2 cursor-pointer transition-all ${
@@ -930,11 +949,30 @@ export default function BookingPage() {
                                 <p className="text-sm font-semibold text-navy">
                                   {fmtPrice(price)}
                                 </p>
-                                <p className="text-xs text-text-secondary">{t("perTeam")}</p>
+                                <p className="text-xs text-text-secondary">{t("perPerson")}</p>
                               </div>
                             )}
                           </div>
                         </div>
+                        {selected && !isFree && (
+                          <div
+                            className="border-t border-navy/10 p-4 space-y-3"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <QtyInput
+                              label={t("persons")}
+                              value={transfer.persons}
+                              min={1}
+                              onChange={(v) => setTransfer((prev) => ({ ...prev, persons: v }))}
+                            />
+                            {xferTotal > 0 && (
+                              <div className="pt-2 border-t border-border flex justify-between text-sm font-medium">
+                                <span className="text-text-secondary">{t("subtotal")}</span>
+                                <span className="text-navy">{fmtPrice(xferTotal)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1065,40 +1103,26 @@ function SummaryTable({
     const opt = data.accommodation.find((a) => a.id === accommodation.optionId);
     if (opt) {
       const optName = getLocalName(opt, locale);
-      const playerPrice = parseFloat(
-        effectivePrice("accommodation", opt.id, opt.pricePerPlayer, data.overrides)
-      );
-      const staffPrice = parseFloat(
-        effectivePrice("accommodation", opt.id, opt.pricePerStaff, data.overrides)
-      );
-      const accompPrice = parseFloat(
-        effectivePrice("accommodation", opt.id, opt.pricePerAccompanying, data.overrides)
-      );
+      const playerPrice = parseFloat(effectivePrice("accommodation", opt.id, opt.pricePerPlayer, data.overrides));
+      const staffPrice = parseFloat(effectivePrice("accommodation", opt.id, opt.pricePerStaff, data.overrides));
+      const accompPrice = parseFloat(effectivePrice("accommodation", opt.id, opt.pricePerAccompanying, data.overrides));
 
-      if (accommodation.players > 0) {
-        rows.push({
-          label: `${optName} — ${t("players")}`,
-          qty: `${accommodation.players}`,
-          unitPrice: fmtPrice(playerPrice),
-          total: playerPrice * accommodation.players,
-        });
-      }
-      if (accommodation.staff > 0) {
-        rows.push({
-          label: `${optName} — ${t("staff")}`,
-          qty: `${accommodation.staff}`,
-          unitPrice: fmtPrice(staffPrice),
-          total: staffPrice * accommodation.staff,
-        });
-      }
-      if (accommodation.accompanying > 0) {
-        rows.push({
-          label: `${optName} — ${t("accompanying")}`,
-          qty: `${accommodation.accompanying}`,
-          unitPrice: fmtPrice(accompPrice),
-          total: accompPrice * accommodation.accompanying,
-        });
-      }
+      const freeP = Math.min(accommodation.players, data.freeSlots.players);
+      const freeS = Math.min(accommodation.staff, data.freeSlots.staff);
+      const freeA = Math.min(accommodation.accompanying, data.freeSlots.accompanying);
+      const paidP = Math.max(0, accommodation.players - freeP);
+      const paidS = Math.max(0, accommodation.staff - freeS);
+      const paidA = Math.max(0, accommodation.accompanying - freeA);
+
+      // Paid rows
+      if (paidP > 0) rows.push({ label: `${optName} — ${t("players")}`, qty: `${paidP}`, unitPrice: fmtPrice(playerPrice), total: playerPrice * paidP });
+      if (paidS > 0) rows.push({ label: `${optName} — ${t("staff")}`, qty: `${paidS}`, unitPrice: fmtPrice(staffPrice), total: staffPrice * paidS });
+      if (paidA > 0) rows.push({ label: `${optName} — ${t("accompanying")}`, qty: `${paidA}`, unitPrice: fmtPrice(accompPrice), total: accompPrice * paidA });
+
+      // Complimentary rows
+      if (freeP > 0) rows.push({ label: `${optName} — ${t("players")} 🎁`, qty: `${freeP}`, unitPrice: "€0.00", total: 0 });
+      if (freeS > 0) rows.push({ label: `${optName} — ${t("staff")} 🎁`, qty: `${freeS}`, unitPrice: "€0.00", total: 0 });
+      if (freeA > 0) rows.push({ label: `${optName} — ${t("accompanying")} 🎁`, qty: `${freeA}`, unitPrice: "€0.00", total: 0 });
     }
   }
 
@@ -1128,10 +1152,11 @@ function SummaryTable({
       const price = parseFloat(
         effectivePrice("transfer", opt.id, opt.pricePerPerson, data.overrides)
       );
+      const isFreeTransfer = price === 0;
       rows.push({
-        label: getLocalName(opt, locale),
-        qty: `${transfer.persons}`,
-        unitPrice: fmtPrice(price),
+        label: isFreeTransfer ? `${getLocalName(opt, locale)} 🎁` : getLocalName(opt, locale),
+        qty: isFreeTransfer ? "—" : `${transfer.persons}`,
+        unitPrice: isFreeTransfer ? "€0.00" : fmtPrice(price),
         total: price * transfer.persons,
       });
     }
