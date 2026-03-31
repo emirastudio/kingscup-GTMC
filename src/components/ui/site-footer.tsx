@@ -16,12 +16,8 @@ export function SiteFooter() {
             <p>
               Tournament organised by{" "}
               <span className="font-semibold text-text-primary">Football Planet</span>.
-              Data processed by Football Planet (data controller) and{" "}
-              <span className="font-semibold text-text-primary">Goality Sport Group</span>.
-            </p>
-            <p className="text-text-secondary/75">
-              Goality Sport Group may use contact information for marketing and promotion of
-              the tournament and services of its partners.
+              Tournament management system provided by{" "}
+              <span className="font-semibold text-text-primary">Goality Sport Group</span> — Goality TMC.
             </p>
           </div>
           <Link
