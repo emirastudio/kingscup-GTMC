@@ -497,6 +497,9 @@ export const packageAssignments = pgTable("package_assignments", {
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),
   assignedBy: integer("assigned_by"),
   isPublished: boolean("is_published").default(false).notNull(),
+  freePlayersCount: integer("free_players_count").default(0).notNull(),
+  freeStaffCount: integer("free_staff_count").default(0).notNull(),
+  freeAccompanyingCount: integer("free_accompanying_count").default(0).notNull(),
 });
 
 // ─── Team Service Overrides (per-team custom pricing) ───

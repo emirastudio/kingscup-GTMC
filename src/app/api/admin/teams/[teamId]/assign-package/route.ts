@@ -69,9 +69,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "No package assigned to this team" }, { status: 404 });
   }
 
+  const updates: Record<string, unknown> = {};
+  if (body.isPublished !== undefined) updates.isPublished = body.isPublished;
+  if (body.freePlayersCount !== undefined) updates.freePlayersCount = Number(body.freePlayersCount);
+  if (body.freeStaffCount !== undefined) updates.freeStaffCount = Number(body.freeStaffCount);
+  if (body.freeAccompanyingCount !== undefined) updates.freeAccompanyingCount = Number(body.freeAccompanyingCount);
+
   const [updated] = await db
     .update(packageAssignments)
-    .set({ isPublished: body.isPublished })
+    .set(updates)
     .where(eq(packageAssignments.id, existing.id))
     .returning();
 

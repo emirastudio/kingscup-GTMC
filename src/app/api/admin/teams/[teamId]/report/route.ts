@@ -198,6 +198,9 @@ export async function GET(_req: NextRequest, context: RouteContext) {
           assignedAt: assignment!.assignedAt,
           isPublished: assignment!.isPublished,
           accommodationOptionId: packageInfo.accommodationOptionId ?? null,
+          freePlayersCount: assignment!.freePlayersCount ?? 0,
+          freeStaffCount: assignment!.freeStaffCount ?? 0,
+          freeAccompanyingCount: assignment!.freeAccompanyingCount ?? 0,
         }
       : null,
     bookings,

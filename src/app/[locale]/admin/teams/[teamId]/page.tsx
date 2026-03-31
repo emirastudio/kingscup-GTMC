@@ -34,7 +34,7 @@ interface TeamReport {
   } | null;
   class: { id: number; name: string; minBirthYear: number | null; maxBirthYear: number | null } | null;
   people: { all: Person[]; counts: { players: number; staff: number; accompanying: number; total: number } };
-  package: { id: number; name: string; assignedAt: string; isPublished: boolean; accommodationOptionId: number | null } | null;
+  package: { id: number; name: string; assignedAt: string; isPublished: boolean; accommodationOptionId: number | null; freePlayersCount: number; freeStaffCount: number; freeAccompanyingCount: number } | null;
   bookings: Booking[];
   overrides: Override[];
   finance: { totalFromBookings: number; totalPaid: number; balance: number };
@@ -274,6 +274,34 @@ function PackagePricingCard({
 }: PackagePricingCardProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  // Free slots
+  const [freePlayers, setFreePlayers] = useState(String(pkg?.freePlayersCount ?? 0));
+  const [freeStaff, setFreeStaff] = useState(String(pkg?.freeStaffCount ?? 0));
+  const [freeAccom, setFreeAccom] = useState(String(pkg?.freeAccompanyingCount ?? 0));
+  const [savingFree, setSavingFree] = useState(false);
+  const [savedFree, setSavedFree] = useState(false);
+
+  async function saveFreeSlots() {
+    setSavingFree(true);
+    setSavedFree(false);
+    try {
+      await fetch(`/api/admin/teams/${teamId}/assign-package`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          freePlayersCount: parseInt(freePlayers) || 0,
+          freeStaffCount: parseInt(freeStaff) || 0,
+          freeAccompanyingCount: parseInt(freeAccom) || 0,
+        }),
+      });
+      await onRefresh();
+      setSavedFree(true);
+      setTimeout(() => setSavedFree(false), 2000);
+    } finally {
+      setSavingFree(false);
+    }
+  }
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -490,7 +518,7 @@ function PackagePricingCard({
                     </td>
                     <td className="py-2.5 pr-3 text-xs text-text-secondary">1 × per team</td>
                     <td className="py-2.5 text-right">
-                      <PriceCell rowKey={`registration-${r.id}`} serviceType="registration" serviceId={r.id} basePrice={parseFloat(r.price)} />
+                      {PriceCell({ rowKey: `registration-${r.id}`, serviceType: "registration", serviceId: r.id, basePrice: parseFloat(r.price) })}
                     </td>
                   </tr>
                 );
@@ -524,13 +552,7 @@ function PackagePricingCard({
                       </div>
                     </td>
                     <td className="py-2.5 text-right">
-                      <PriceCell
-                        rowKey={`accommodation-${a.id}`}
-                        serviceType="accommodation"
-                        serviceId={a.id}
-                        basePrice={parseFloat(a.pricePerPlayer)}
-                        unitLabel="per person"
-                      />
+                      {PriceCell({ rowKey: `accommodation-${a.id}`, serviceType: "accommodation", serviceId: a.id, basePrice: parseFloat(a.pricePerPlayer), unitLabel: "per person" })}
                       {ov?.customPrice && (
                         <div className="text-xs text-text-secondary text-right mt-0.5">all types</div>
                       )}
@@ -553,7 +575,7 @@ function PackagePricingCard({
                     </td>
                     <td className="py-2.5 pr-3 text-xs text-text-secondary">Per team</td>
                     <td className="py-2.5 text-right">
-                      <PriceCell rowKey={`transfer-${t.id}`} serviceType="transfer" serviceId={t.id} basePrice={parseFloat(t.pricePerPerson)} />
+                      {PriceCell({ rowKey: `transfer-${t.id}`, serviceType: "transfer", serviceId: t.id, basePrice: parseFloat(t.pricePerPerson) })}
                     </td>
                   </tr>
                 );
@@ -574,7 +596,7 @@ function PackagePricingCard({
                       {m.perDay ? "Per person / day" : "Per person"}
                     </td>
                     <td className="py-2.5 text-right">
-                      <PriceCell rowKey={`meal-${m.id}`} serviceType="meal" serviceId={m.id} basePrice={parseFloat(m.pricePerPerson)} />
+                      {PriceCell({ rowKey: `meal-${m.id}`, serviceType: "meal", serviceId: m.id, basePrice: parseFloat(m.pricePerPerson) })}
                     </td>
                   </tr>
                 );
@@ -586,6 +608,54 @@ function PackagePricingCard({
           <p className="text-xs text-text-secondary mt-3 italic">
             Click any price to edit. Press Enter to save, Esc to cancel. Base price restores on clear.
           </p>
+
+          {/* ── Free Slots ── */}
+          <div className="mt-5 pt-5 border-t border-border">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">Free slots</p>
+                <p className="text-xs text-text-secondary">Complimentary places (visible to the team)</p>
+              </div>
+              <button
+                onClick={saveFreeSlots}
+                disabled={savingFree}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-navy text-white hover:bg-navy/90 disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {savingFree ? "Saving…" : savedFree ? "✓ Saved" : "Save"}
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Players", value: freePlayers, set: setFreePlayers },
+                { label: "Staff / Coaches", value: freeStaff, set: setFreeStaff },
+                { label: "Accompanying", value: freeAccom, set: setFreeAccom },
+              ].map(({ label, value, set }) => (
+                <div key={label}>
+                  <label className="block text-xs text-text-secondary mb-1">{label}</label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={value}
+                      onChange={(e) => set(String(parseInt(e.target.value) || 0))}
+                      className="w-16 rounded-lg border border-border px-2 py-1.5 text-sm font-semibold text-center focus:outline-none focus:border-navy"
+                    />
+                    <span className="text-xs text-text-secondary">free</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {(parseInt(freePlayers) > 0 || parseInt(freeStaff) > 0 || parseInt(freeAccom) > 0) && (
+              <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs text-emerald-700">
+                The team will see: {[
+                  parseInt(freePlayers) > 0 ? `${freePlayers} free player${parseInt(freePlayers) > 1 ? "s" : ""}` : null,
+                  parseInt(freeStaff) > 0 ? `${freeStaff} free staff` : null,
+                  parseInt(freeAccom) > 0 ? `${freeAccom} free accompanying` : null,
+                ].filter(Boolean).join(", ")}
+              </div>
+            )}
+          </div>
         </>
       )}
     </Card>

@@ -70,6 +70,7 @@ type BookingData = {
   registration: RegistrationFee | null;
   bookings: SavedBooking[];
   overrides: ServiceOverride[];
+  freeSlots: { players: number; staff: number; accompanying: number };
 };
 
 type SavedBooking = {
@@ -570,6 +571,22 @@ export default function BookingPage() {
 
           {/* ─── Step 2: Accommodation ────────────────────────────────── */}
           <StepCard stepNum={2} title={t("selectAccommodation")} subtotal={accomTotal}>
+            {/* Free slots banner */}
+            {(data.freeSlots.players > 0 || data.freeSlots.staff > 0 || data.freeSlots.accompanying > 0) && (
+              <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-start gap-2">
+                <span className="text-emerald-600 text-base shrink-0">🎁</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-800">Complimentary places included</p>
+                  <p className="text-xs text-emerald-700 mt-0.5">
+                    {[
+                      data.freeSlots.players > 0 ? `${data.freeSlots.players} free player${data.freeSlots.players > 1 ? "s" : ""}` : null,
+                      data.freeSlots.staff > 0 ? `${data.freeSlots.staff} free staff` : null,
+                      data.freeSlots.accompanying > 0 ? `${data.freeSlots.accompanying} free accompanying` : null,
+                    ].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              </div>
+            )}
             {data.accommodation.length === 0 ? (
               <p className="text-sm text-text-secondary">{t("noAccommodationOptions")}</p>
             ) : (
