@@ -231,10 +231,10 @@ export default function PrivacyPage() {
                 </p>
                 <p className="mt-1">
                   <a
-                    href="mailto:privacy@goality.com"
+                    href="mailto:support@goality360.com"
                     className="text-navy hover:underline"
                   >
-                    privacy@goality.com
+                    support@goality360.com
                   </a>
                 </p>
               </div>
