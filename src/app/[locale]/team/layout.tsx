@@ -3,6 +3,7 @@ import { TeamSidebar } from "@/components/team/team-sidebar";
 import { MobileNav } from "@/components/team/mobile-nav";
 import { TeamSwitcher } from "@/components/club/team-switcher";
 import { TeamProvider } from "@/lib/team-context";
+import { SiteFooter } from "@/components/ui/site-footer";
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads, tournaments } from "@/db/schema";
@@ -113,7 +114,10 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
             </div>
           </div>
           {/* Main content — extra bottom padding on mobile for bottom nav */}
-          <main className="flex-1 p-4 md:p-6 bg-surface pb-20 md:pb-6">{children}</main>
+          <main className="flex-1 p-4 md:p-6 bg-surface pb-20 md:pb-6 flex flex-col">
+            <div className="flex-1">{children}</div>
+            <SiteFooter />
+          </main>
         </div>
         {/* Mobile bottom nav */}
         <MobileNav inboxCount={inboxCount} />
