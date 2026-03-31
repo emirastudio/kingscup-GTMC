@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { useTeam } from "@/lib/team-context";
 import {
-  Upload, ImageIcon, Check, UserPlus, Copy, Trash2, Users,
+  Upload, ImageIcon, Check, UserPlus, Copy, Trash2, Users, Info,
 } from "lucide-react";
 
 type Manager = {
@@ -246,9 +246,25 @@ export default function ClubPage() {
             )}
 
             {/* Invite new manager */}
-            <div className="pt-2 border-t border-border">
-              <p className="text-sm font-medium text-text-primary mb-1">{t("inviteNew")}</p>
-              <p className="text-xs text-text-secondary mb-3">{tp("inviteManagerDesc")}</p>
+            <div className="pt-2 border-t border-border space-y-3">
+              <p className="text-sm font-medium text-text-primary">{t("inviteNew")}</p>
+
+              {/* How it works */}
+              <div className="rounded-xl bg-navy/5 border border-navy/10 p-4 space-y-2">
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Info className="w-4 h-4 text-navy shrink-0" />
+                  <span className="text-xs font-semibold text-navy uppercase tracking-wide">{t("inviteHowTitle")}</span>
+                </div>
+                {(["inviteStep1", "inviteStep2", "inviteStep3", "inviteStep4"] as const).map((key, i) => (
+                  <div key={key} className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-navy text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <p className="text-xs text-text-secondary leading-relaxed">{t(key)}</p>
+                  </div>
+                ))}
+                <p className="text-[11px] text-text-secondary/70 italic mt-2 pl-7">{t("inviteNote")}</p>
+              </div>
 
               {inviteToken && inviteTeamId ? (
                 <div className="space-y-2">

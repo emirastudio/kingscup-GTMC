@@ -113,6 +113,18 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
           teamName={activeTeam?.name}
           regNumber={activeTeam?.regNumber}
           year={2026}
+          clubName={club.name}
+          clubBadgeUrl={club.badgeUrl ?? null}
+          clubId={club.id}
+          teams={enrichedTeams.map(t => ({
+            id: t.id,
+            name: t.name,
+            className: t.className,
+            status: t.status,
+            playersCount: t.playersCount,
+          }))}
+          classes={classes.map(c => ({ id: c.id, name: c.name }))}
+          isTeamManager={isTeamManager}
         />
         <div className="flex flex-1">
           {/* Desktop sidebar */}
