@@ -938,11 +938,27 @@ export default function AdminTeamDetailPage() {
         <StatTile label="Players" value={people.counts.players} sub={`+ ${people.counts.staff} staff`} />
         <StatTile
           label="Accommodation"
-          value={report.bookings.find((b) => b.bookingType === "accommodation")
-            ? resolveServiceName("accommodation", report.bookings.find((b) => b.bookingType === "accommodation")!.serviceId)
-            : "—"}
-          sub={report.bookings.find((b) => b.bookingType === "accommodation") ? "booked" : "not booked"}
-          color={report.bookings.find((b) => b.bookingType === "accommodation") ? "green" : "default"}
+          value={(() => {
+            const t = team;
+            if (t.accomDeclined) return "No hotel";
+            if (t.accomConfirmed) {
+              const total = (t.accomPlayers ?? 0) + (t.accomStaff ?? 0) + (t.accomAccompanying ?? 0);
+              return `${total} place${total !== 1 ? "s" : ""}`;
+            }
+            return "—";
+          })()}
+          sub={(() => {
+            const t = team;
+            if (t.accomDeclined) return "declined";
+            if (t.accomConfirmed) {
+              const parts = [];
+              if (t.accomCheckIn) parts.push(t.accomCheckIn);
+              if (t.accomCheckOut) parts.push(t.accomCheckOut);
+              return parts.length ? parts.join(" → ") : "confirmed";
+            }
+            return "not answered";
+          })()}
+          color={team.accomConfirmed ? "green" : team.accomDeclined ? "default" : "default"}
         />
         <StatTile
           label="Package"
