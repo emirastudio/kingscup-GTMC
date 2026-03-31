@@ -3,13 +3,169 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { Crown, ChevronRight, ChevronLeft, Check, Plus, Trash2, ImageIcon } from "lucide-react";
+import { Crown, ChevronRight, ChevronLeft, Check, Plus, Trash2, ImageIcon, ChevronDown, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+
+const COUNTRIES = [
+  { name: "Estonia", flag: "🇪🇪" },
+  { name: "Latvia", flag: "🇱🇻" },
+  { name: "Lithuania", flag: "🇱🇹" },
+  { name: "Finland", flag: "🇫🇮" },
+  { name: "Russia", flag: "🇷🇺" },
+  { name: "Ukraine", flag: "🇺🇦" },
+  { name: "Belarus", flag: "🇧🇾" },
+  { name: "Germany", flag: "🇩🇪" },
+  { name: "Poland", flag: "🇵🇱" },
+  { name: "Sweden", flag: "🇸🇪" },
+  { name: "Norway", flag: "🇳🇴" },
+  { name: "Denmark", flag: "🇩🇰" },
+  { name: "Netherlands", flag: "🇳🇱" },
+  { name: "Belgium", flag: "🇧🇪" },
+  { name: "France", flag: "🇫🇷" },
+  { name: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  { name: "Spain", flag: "🇪🇸" },
+  { name: "Italy", flag: "🇮🇹" },
+  { name: "Portugal", flag: "🇵🇹" },
+  { name: "Czech Republic", flag: "🇨🇿" },
+  { name: "Slovakia", flag: "🇸🇰" },
+  { name: "Hungary", flag: "🇭🇺" },
+  { name: "Romania", flag: "🇷🇴" },
+  { name: "Bulgaria", flag: "🇧🇬" },
+  { name: "Croatia", flag: "🇭🇷" },
+  { name: "Serbia", flag: "🇷🇸" },
+  { name: "Slovenia", flag: "🇸🇮" },
+  { name: "Austria", flag: "🇦🇹" },
+  { name: "Switzerland", flag: "🇨🇭" },
+  { name: "Greece", flag: "🇬🇷" },
+  { name: "Turkey", flag: "🇹🇷" },
+  { name: "Israel", flag: "🇮🇱" },
+  { name: "Georgia", flag: "🇬🇪" },
+  { name: "Armenia", flag: "🇦🇲" },
+  { name: "Azerbaijan", flag: "🇦🇿" },
+  { name: "Kazakhstan", flag: "🇰🇿" },
+  { name: "Iceland", flag: "🇮🇸" },
+  { name: "Ireland", flag: "🇮🇪" },
+  { name: "Scotland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+  { name: "Wales", flag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿" },
+  { name: "Moldova", flag: "🇲🇩" },
+  { name: "Albania", flag: "🇦🇱" },
+  { name: "North Macedonia", flag: "🇲🇰" },
+  { name: "Bosnia and Herzegovina", flag: "🇧🇦" },
+  { name: "Montenegro", flag: "🇲🇪" },
+  { name: "Kosovo", flag: "🇽🇰" },
+  { name: "Cyprus", flag: "🇨🇾" },
+  { name: "Malta", flag: "🇲🇹" },
+  { name: "Luxembourg", flag: "🇱🇺" },
+  { name: "Other", flag: "🌍" },
+];
+
+function CountrySelect({
+  value,
+  onChange,
+  label,
+  required,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  label: string;
+  required?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const selected = COUNTRIES.find((c) => c.name === value);
+  const filtered = COUNTRIES.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    if (open && searchRef.current) searchRef.current.focus();
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-sm font-medium text-text-primary mb-1.5">
+        {label}{required && <span className="text-error ml-0.5">*</span>}
+      </label>
+      <button
+        type="button"
+        onClick={() => { setOpen((o) => !o); setSearch(""); }}
+        className={cn(
+          "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border bg-white text-sm transition-colors",
+          open ? "border-navy ring-2 ring-navy/20" : "border-border hover:border-navy/40",
+          !value && "text-text-secondary"
+        )}
+      >
+        {selected ? (
+          <>
+            <span className="text-xl leading-none">{selected.flag}</span>
+            <span className="flex-1 text-left text-text-primary">{selected.name}</span>
+          </>
+        ) : (
+          <span className="flex-1 text-left">Select country...</span>
+        )}
+        <ChevronDown className={cn("w-4 h-4 text-text-secondary transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-xl shadow-lg overflow-hidden">
+          {/* Search */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+            <Search className="w-3.5 h-3.5 text-text-secondary shrink-0" />
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="flex-1 text-sm outline-none bg-transparent placeholder:text-text-secondary/60"
+            />
+          </div>
+          {/* List */}
+          <div className="max-h-52 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <p className="text-sm text-text-secondary text-center py-3">No results</p>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.name}
+                  type="button"
+                  onClick={() => { onChange(c.name); setOpen(false); setSearch(""); }}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors hover:bg-surface",
+                    value === c.name && "bg-navy/5 font-medium text-navy"
+                  )}
+                >
+                  <span className="text-xl leading-none">{c.flag}</span>
+                  <span>{c.name}</span>
+                  {value === c.name && <Check className="w-3.5 h-3.5 ml-auto text-navy" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type TournamentClass = { id: number; name: string; minBirthYear: number | null };
 type TeamEntry = { name: string; classId: string };
@@ -203,8 +359,12 @@ export default function RegisterPage() {
                 onChange={(e) => setClubName(e.target.value)} placeholder={t("club.namePlaceholder")} required />
 
               <div className="grid grid-cols-2 gap-4">
-                <Input id="country" label={t("club.country")} value={country}
-                  onChange={(e) => setCountry(e.target.value)} placeholder={t("club.countryPlaceholder")} required />
+                <CountrySelect
+                  label={t("club.country")}
+                  value={country}
+                  onChange={setCountry}
+                  required
+                />
                 <Input id="city" label={t("club.city")} value={city}
                   onChange={(e) => setCity(e.target.value)} placeholder={t("club.cityPlaceholder")} />
               </div>
