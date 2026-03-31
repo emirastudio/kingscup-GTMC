@@ -21,7 +21,12 @@ import {
 type TeamStatus = "draft" | "open" | "confirmed" | "cancelled";
 
 interface TeamReport {
-  team: { id: number; name: string; regNumber: number; status: TeamStatus; notes: string | null };
+  team: {
+    id: number; name: string; regNumber: number; status: TeamStatus; notes: string | null; hotelId: number | null;
+    accomPlayers: number; accomStaff: number; accomAccompanying: number;
+    accomCheckIn: string | null; accomCheckOut: string | null; accomNotes: string | null;
+    accomDeclined: boolean; accomConfirmed: boolean;
+  };
   club: {
     id: number; name: string; badgeUrl: string | null;
     contactName: string | null; contactEmail: string | null; contactPhone: string | null;
@@ -36,7 +41,19 @@ interface TeamReport {
   payments: Payment[];
   travel: Travel | null;
   tournamentInfo: TournamentInfo | null;
+  assignedHotel: AssignedHotel | null;
+  availableHotels: { id: number; name: string; address: string | null }[];
   services: Services;
+}
+
+interface AssignedHotel {
+  id: number;
+  name: string;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  notes: string | null;
 }
 
 interface Person {
@@ -774,7 +791,7 @@ export default function AdminTeamDetailPage() {
     );
   }
 
-  const { team, club, class: teamClass, people, finance, payments, travel, tournamentInfo: tInfo, services, overrides } = report;
+  const { team, club, class: teamClass, people, finance, payments, travel, tournamentInfo: tInfo, assignedHotel, availableHotels, services, overrides } = report;
   const players = people.all.filter((p) => p.personType === "player");
   const staff = people.all.filter((p) => p.personType === "staff");
   const accompanying = people.all.filter((p) => p.personType === "accompanying");
@@ -1080,6 +1097,76 @@ export default function AdminTeamDetailPage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════
+          ACCOMMODATION PRE-BOOKING
+      ══════════════════════════════════════════════════════════════════ */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>🏨 Предварительное бронирование проживания</CardTitle>
+            {team.accomConfirmed ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-300">
+                ✅ Подтверждено
+              </span>
+            ) : team.accomDeclined ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-surface text-text-secondary border-border">
+                Отказались
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-300">
+                ⏳ Ожидает
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        {team.accomConfirmed ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-border bg-surface/50 p-3">
+              <p className="text-xs text-text-secondary">Игроки</p>
+              <p className="text-xl font-bold text-text-primary">{team.accomPlayers}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-surface/50 p-3">
+              <p className="text-xs text-text-secondary">Стаф</p>
+              <p className="text-xl font-bold text-text-primary">{team.accomStaff}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-surface/50 p-3">
+              <p className="text-xs text-text-secondary">Сопровождающие</p>
+              <p className="text-xl font-bold text-text-primary">{team.accomAccompanying}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-surface/50 p-3">
+              <p className="text-xs text-text-secondary">Всего мест</p>
+              <p className="text-xl font-bold text-navy">{team.accomPlayers + team.accomStaff + team.accomAccompanying}</p>
+            </div>
+          </div>
+        ) : team.accomDeclined ? (
+          <p className="text-sm text-text-secondary italic">Команда отказалась от проживания в отеле.</p>
+        ) : (
+          <p className="text-sm text-text-secondary italic">Команда ещё не ответила на вопрос о проживании.</p>
+        )}
+        {team.accomConfirmed && (team.accomCheckIn || team.accomCheckOut) && (
+          <div className="mt-3 flex gap-6 text-sm">
+            {team.accomCheckIn && (
+              <div>
+                <span className="text-xs text-text-secondary block">Заезд</span>
+                <span className="font-semibold text-text-primary">{team.accomCheckIn}</span>
+              </div>
+            )}
+            {team.accomCheckOut && (
+              <div>
+                <span className="text-xs text-text-secondary block">Выезд</span>
+                <span className="font-semibold text-text-primary">{team.accomCheckOut}</span>
+              </div>
+            )}
+          </div>
+        )}
+        {team.accomConfirmed && team.accomNotes && (
+          <div className="mt-3 rounded-lg bg-surface border border-border p-3 text-sm text-text-secondary">
+            <span className="text-xs font-semibold text-text-secondary block mb-1">Пожелания</span>
+            {team.accomNotes}
+          </div>
+        )}
+      </Card>
+
+      {/* ══════════════════════════════════════════════════════════════════
           ROW 3: Package & Pricing + Hotel & Logistics
       ══════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -1116,43 +1203,53 @@ export default function AdminTeamDetailPage() {
             </div>
           </CardHeader>
 
-          {!tInfo ? (
-            <p className="text-sm text-text-secondary italic">
-              Tournament info not set. Go to{" "}
-              <button onClick={() => router.push(`/${locale}/admin/settings`)}
-                className="text-navy hover:underline cursor-pointer">Settings</button>
-              {" "}to add hotel & logistics details.
-            </p>
-          ) : (
-            <div className="space-y-5">
-              {/* Hotel */}
-              {(tInfo.hotelName || tInfo.hotelAddress) && (
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3 flex items-center gap-1.5">
-                    <Hotel className="w-3.5 h-3.5" /> Hotel
-                  </h4>
-                  <div className="space-y-2">
-                    <InfoRow icon={<Hotel className="w-4 h-4" />} label="Name" value={tInfo.hotelName} />
-                    <InfoRow icon={<MapPin className="w-4 h-4" />} label="Address" value={tInfo.hotelAddress} />
-                    {(tInfo.hotelCheckIn || tInfo.hotelCheckOut) && (
-                      <div className="flex items-start gap-3 text-sm">
-                        <span className="text-text-secondary mt-0.5 shrink-0"><Clock className="w-4 h-4" /></span>
-                        <div>
-                          <span className="text-xs text-text-secondary block">Check-in / Check-out</span>
-                          <span className="text-text-primary font-medium">
-                            {tInfo.hotelCheckIn ?? "—"} / {tInfo.hotelCheckOut ?? "—"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {tInfo.hotelNotes && (
-                      <div className="rounded-lg bg-surface border border-border p-2.5 text-xs text-text-secondary">
-                        {tInfo.hotelNotes}
+          <div className="space-y-5">
+              {/* Hotel assignment */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3 flex items-center gap-1.5">
+                  <Hotel className="w-3.5 h-3.5" /> Отель команды
+                </h4>
+                {availableHotels.length === 0 ? (
+                  <p className="text-sm text-text-secondary italic">
+                    Отели не добавлены.{" "}
+                    <button onClick={() => router.push(`/${locale}/admin/tournaments`)}
+                      className="text-navy hover:underline cursor-pointer">Добавить в турнире</button>
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <select
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-white focus:outline-none focus:border-navy"
+                      value={team.hotelId ?? ""}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        await fetch(`/api/admin/teams/${teamId}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ hotelId: val ? Number(val) : null }),
+                        });
+                        fetchReport();
+                      }}
+                    >
+                      <option value="">— Не назначен —</option>
+                      {availableHotels.map((h) => (
+                        <option key={h.id} value={h.id}>{h.name}{h.address ? ` · ${h.address}` : ""}</option>
+                      ))}
+                    </select>
+                    {assignedHotel && (
+                      <div className="rounded-lg bg-navy/5 border border-navy/15 p-3 space-y-1.5">
+                        <p className="text-sm font-semibold text-navy">{assignedHotel.name}</p>
+                        {assignedHotel.address && <p className="text-xs text-text-secondary">{assignedHotel.address}</p>}
+                        {assignedHotel.contactName && <p className="text-xs text-text-secondary">Контакт: {assignedHotel.contactName}</p>}
+                        {assignedHotel.contactPhone && <a href={`tel:${assignedHotel.contactPhone}`} className="text-xs text-navy hover:underline block">{assignedHotel.contactPhone}</a>}
+                        {assignedHotel.contactEmail && <p className="text-xs text-text-secondary">{assignedHotel.contactEmail}</p>}
+                        {assignedHotel.notes && <p className="text-xs text-text-secondary italic">{assignedHotel.notes}</p>}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {tInfo && <>
 
               {/* Meals */}
               {(tInfo.mealTimes || tInfo.mealLocation || tInfo.mealNotes) && (
@@ -1200,11 +1297,8 @@ export default function AdminTeamDetailPage() {
                 </div>
               )}
 
-              {!tInfo.hotelName && !tInfo.mealTimes && !tInfo.scheduleUrl && (
-                <p className="text-sm text-text-secondary italic">No logistics info set yet.</p>
-              )}
+              </>}
             </div>
-          )}
         </Card>
       </div>
 

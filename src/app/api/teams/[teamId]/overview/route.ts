@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { teams, people, teamBookings, teamTravel, payments, tournamentClasses } from "@/db/schema";
+import { teams, people, teamBookings, teamTravel, payments, tournamentClasses, tournamentInfo, tournaments, tournamentHotels } from "@/db/schema";
 import { eq, and, count, sql } from "drizzle-orm";
 
 export async function GET(
@@ -51,6 +51,19 @@ export async function GET(
     .from(payments)
     .where(and(eq(payments.teamId, tid), eq(payments.status, "received")));
 
+  // Tournament info
+  const tournament = await db.query.tournaments.findFirst({
+    where: eq(tournaments.registrationOpen, true),
+  });
+  const [tInfo, assignedHotel] = await Promise.all([
+    tournament
+      ? db.query.tournamentInfo.findFirst({ where: eq(tournamentInfo.tournamentId, tournament.id) })
+      : Promise.resolve(null),
+    team.hotelId
+      ? db.query.tournamentHotels.findFirst({ where: eq(tournamentHotels.id, team.hotelId) })
+      : Promise.resolve(null),
+  ]);
+
   // Allergies list
   const allergies = await db.query.people.findMany({
     where: and(eq(people.teamId, tid), sql`${people.allergies} IS NOT NULL AND ${people.allergies} != ''`),
@@ -63,7 +76,7 @@ export async function GET(
     hasStaff: Number(staffCount?.count ?? 0) > 0,
     hasResponsible: !!responsibleStaff,
     hasTravel: !!(travel?.arrivalDate),
-    hasOrders: parseFloat(orderTotal?.total ?? "0") > 0,
+    hasOrders: team.accomConfirmed || team.accomDeclined || parseFloat(orderTotal?.total ?? "0") > 0,
   };
   const completedSteps = Object.values(checks).filter(Boolean).length;
   const totalSteps = Object.keys(checks).length;
@@ -71,6 +84,14 @@ export async function GET(
 
   return NextResponse.json({
     team,
+    accomPlayers: team.accomPlayers ?? 0,
+    accomStaff: team.accomStaff ?? 0,
+    accomAccompanying: team.accomAccompanying ?? 0,
+    accomCheckIn: team.accomCheckIn ?? null,
+    accomCheckOut: team.accomCheckOut ?? null,
+    accomNotes: team.accomNotes ?? null,
+    accomDeclined: team.accomDeclined,
+    accomConfirmed: team.accomConfirmed,
     minBirthYear: teamClass?.minBirthYear ?? null,
     counts: {
       players: Number(playerCount?.count ?? 0),
@@ -88,5 +109,13 @@ export async function GET(
     completionPercent,
     allergies,
     hasTravel: !!(travel?.arrivalDate),
+    tournamentInfo: tInfo ?? null,
+    assignedHotel: assignedHotel ? {
+      name: assignedHotel.name,
+      address: assignedHotel.address,
+      contactName: assignedHotel.contactName,
+      contactPhone: assignedHotel.contactPhone,
+      notes: assignedHotel.notes,
+    } : null,
   });
 }

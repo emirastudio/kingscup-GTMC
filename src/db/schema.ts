@@ -79,10 +79,42 @@ export const tournamentClasses = pgTable("tournament_classes", {
     .references(() => tournaments.id, { onDelete: "cascade" })
     .notNull(),
   name: text("name").notNull(),
+  format: text("format"), // "5x5", "6x6", "7x7", "8x8", "9x9", "11x11"
   minBirthYear: integer("min_birth_year"),
   maxBirthYear: integer("max_birth_year"),
   maxPlayers: integer("max_players").default(25),
   maxStaff: integer("max_staff").default(5),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Tournament Fields (football pitches / venues) ──────
+export const tournamentFields = pgTable("tournament_fields", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),           // "База Спартак", "Стадион А"
+  address: text("address"),
+  mapUrl: text("map_url"),                // Google Maps link
+  scheduleUrl: text("schedule_url"),      // Link to schedule/buses
+  notes: text("notes"),                   // Any extra info
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Tournament Hotels ───────────────────────────────────
+export const tournamentHotels = pgTable("tournament_hotels", {
+  id: serial("id").primaryKey(),
+  tournamentId: integer("tournament_id")
+    .references(() => tournaments.id, { onDelete: "cascade" })
+    .notNull(),
+  name: text("name").notNull(),
+  address: text("address"),
+  contactName: text("contact_name"),
+  contactPhone: text("contact_phone"),
+  contactEmail: text("contact_email"),
+  notes: text("notes"),
+  sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -153,6 +185,15 @@ export const teams = pgTable(
     status: teamStatusEnum("status").default("draft").notNull(),
     regNumber: integer("reg_number").notNull(),
     notes: text("notes"), // admin notes about this team
+    hotelId: integer("hotel_id"), // assigned hotel (references tournament_hotels)
+    accomPlayers: integer("accom_players").default(0),
+    accomStaff: integer("accom_staff").default(0),
+    accomAccompanying: integer("accom_accompanying").default(0),
+    accomCheckIn: text("accom_check_in"),
+    accomCheckOut: text("accom_check_out"),
+    accomNotes: text("accom_notes"),
+    accomDeclined: boolean("accom_declined").default(false).notNull(),
+    accomConfirmed: boolean("accom_confirmed").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

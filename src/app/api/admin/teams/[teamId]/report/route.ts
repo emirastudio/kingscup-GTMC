@@ -16,6 +16,7 @@ import {
   extraMealOptions,
   transferOptions,
   registrationFees,
+  tournamentHotels,
 } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq, and, sum } from "drizzle-orm";
@@ -123,6 +124,19 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     where: eq(tournamentInfo.tournamentId, team.tournamentId),
   });
 
+  // Assigned hotel
+  const assignedHotel = team.hotelId
+    ? await db.query.tournamentHotels.findFirst({
+        where: eq(tournamentHotels.id, team.hotelId),
+      })
+    : null;
+
+  // All available hotels for dropdown
+  const availableHotels = await db.query.tournamentHotels.findMany({
+    where: eq(tournamentHotels.tournamentId, team.tournamentId),
+    orderBy: (h, { asc }) => [asc(h.sortOrder), asc(h.id)],
+  });
+
   // Services (to resolve booking names)
   const [accommodations, meals, transfers, regFees] = await Promise.all([
     db.query.accommodationOptions.findMany({ where: eq(accommodationOptions.tournamentId, team.tournamentId) }),
@@ -138,6 +152,15 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       regNumber: team.regNumber,
       status: team.status,
       notes: team.notes,
+      hotelId: team.hotelId ?? null,
+      accomPlayers: team.accomPlayers ?? 0,
+      accomStaff: team.accomStaff ?? 0,
+      accomAccompanying: team.accomAccompanying ?? 0,
+      accomCheckIn: team.accomCheckIn ?? null,
+      accomCheckOut: team.accomCheckOut ?? null,
+      accomNotes: team.accomNotes ?? null,
+      accomDeclined: team.accomDeclined,
+      accomConfirmed: team.accomConfirmed,
     },
     club: club
       ? {
@@ -186,6 +209,20 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     },
     payments: paymentsHistory,
     travel: travel ?? null,
+    assignedHotel: assignedHotel ? {
+      id: assignedHotel.id,
+      name: assignedHotel.name,
+      address: assignedHotel.address,
+      contactName: assignedHotel.contactName,
+      contactPhone: assignedHotel.contactPhone,
+      contactEmail: assignedHotel.contactEmail,
+      notes: assignedHotel.notes,
+    } : null,
+    availableHotels: availableHotels.map((h) => ({
+      id: h.id,
+      name: h.name,
+      address: h.address,
+    })),
     tournamentInfo: tInfo ? {
       scheduleUrl: tInfo.scheduleUrl,
       hotelName: tInfo.hotelName,
