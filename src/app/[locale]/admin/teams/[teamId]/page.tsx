@@ -1287,18 +1287,18 @@ export default function AdminTeamDetailPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
-            <CardTitle>🏨 Предварительное бронирование проживания</CardTitle>
+            <CardTitle>🏨 Accommodation Pre-Booking</CardTitle>
             {team.accomConfirmed ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-300">
-                ✅ Подтверждено
+                ✅ Confirmed
               </span>
             ) : team.accomDeclined ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-surface text-text-secondary border-border">
-                Отказались
+                Declined
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-300">
-                ⏳ Ожидает
+                ⏳ Pending
               </span>
             )}
           </div>
@@ -1306,19 +1306,19 @@ export default function AdminTeamDetailPage() {
         {team.accomConfirmed ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="rounded-lg border border-border bg-surface/50 p-3">
-              <p className="text-xs text-text-secondary">Игроки</p>
+              <p className="text-xs text-text-secondary">Players</p>
               <p className="text-xl font-bold text-text-primary">{team.accomPlayers}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface/50 p-3">
-              <p className="text-xs text-text-secondary">Стаф</p>
+              <p className="text-xs text-text-secondary">Staff</p>
               <p className="text-xl font-bold text-text-primary">{team.accomStaff}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface/50 p-3">
-              <p className="text-xs text-text-secondary">Сопровождающие</p>
+              <p className="text-xs text-text-secondary">Accompanying</p>
               <p className="text-xl font-bold text-text-primary">{team.accomAccompanying}</p>
             </div>
             <div className="rounded-lg border border-border bg-surface/50 p-3">
-              <p className="text-xs text-text-secondary">Всего мест</p>
+              <p className="text-xs text-text-secondary">Total beds</p>
               <p className="text-xl font-bold text-navy">{team.accomPlayers + team.accomStaff + team.accomAccompanying}</p>
             </div>
           </div>
@@ -1331,13 +1331,13 @@ export default function AdminTeamDetailPage() {
           <div className="mt-3 flex gap-6 text-sm">
             {team.accomCheckIn && (
               <div>
-                <span className="text-xs text-text-secondary block">Заезд</span>
+                <span className="text-xs text-text-secondary block">Check-in</span>
                 <span className="font-semibold text-text-primary">{team.accomCheckIn}</span>
               </div>
             )}
             {team.accomCheckOut && (
               <div>
-                <span className="text-xs text-text-secondary block">Выезд</span>
+                <span className="text-xs text-text-secondary block">Check-out</span>
                 <span className="font-semibold text-text-primary">{team.accomCheckOut}</span>
               </div>
             )}
@@ -1345,7 +1345,7 @@ export default function AdminTeamDetailPage() {
         )}
         {team.accomConfirmed && team.accomNotes && (
           <div className="mt-3 rounded-lg bg-surface border border-border p-3 text-sm text-text-secondary">
-            <span className="text-xs font-semibold text-text-secondary block mb-1">Пожелания</span>
+            <span className="text-xs font-semibold text-text-secondary block mb-1">Special requests</span>
             {team.accomNotes}
           </div>
         )}
