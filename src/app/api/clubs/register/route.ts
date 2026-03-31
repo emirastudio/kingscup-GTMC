@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { clubs, clubUsers, teams, tournaments, servicePackages, packageAssignments } from "@/db/schema";
+import { clubs, clubUsers, teams, tournaments, servicePackages, packageAssignments, inboxMessages, messageRecipients } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { hashPassword, createToken, setSessionCookie } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
@@ -103,6 +103,50 @@ export async function POST(req: NextRequest) {
         isPublished: false,
       }).onConflictDoNothing();
     }
+  }
+
+  // Send welcome message to each new team
+  const createdTeamsForWelcome = await db.query.teams.findMany({
+    where: and(eq(teams.clubId, club.id), eq(teams.tournamentId, tournament.id)),
+  });
+
+  const welcomeSubject = "Welcome to Kings Cup 2026! 👑";
+  const welcomeBody = `Dear ${clubName} team,
+
+Welcome to Kings Cup 2026! We are delighted to have you with us.
+
+To complete your registration, please go through all the steps in your team portal:
+
+✅ Players — add all players with full names and dates of birth
+✅ Staff / Coaches — add coaching staff and responsible person on site
+✅ Travel — fill in your arrival and departure details
+✅ Booking — select accommodation and transfer options
+
+📋 How to fill in allergy & medical data:
+When adding players and staff, please carefully fill in any allergies, dietary requirements or medical notes. This information is important for your team's safety and for meal planning. Even if there are no special requirements, please confirm this for each person.
+
+⚠️ Important — two-step process:
+At this stage, please provide your initial registration data (number of players, staff, accompanying persons and travel details). Once we receive your information, Kings Cup will prepare your full accommodation and meal package. You will then be able to update your detailed data accordingly.
+
+If you have any questions, feel free to send us a message through the Inbox — we are here to help!
+
+Kings Cup Organising Team
+Football Planet`;
+
+  for (const team of createdTeamsForWelcome) {
+    const [msg] = await db
+      .insert(inboxMessages)
+      .values({
+        tournamentId: tournament.id,
+        subject: welcomeSubject,
+        body: welcomeBody,
+        sendToAll: false,
+      })
+      .returning();
+    await db.insert(messageRecipients).values({
+      messageId: msg.id,
+      teamId: team.id,
+    });
   }
 
   // Create club user with password + role
