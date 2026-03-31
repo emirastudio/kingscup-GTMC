@@ -102,6 +102,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
       initialTeamId={activeTeam?.id ?? null}
       initialClubId={club.id}
       initialTournamentId={club.tournamentId}
+      initialInboxCount={inboxCount}
     >
       <div className="flex flex-col min-h-screen">
         <TeamHeader
@@ -122,7 +123,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
               />
             </div>
             <div className="p-3 flex-1">
-              <TeamSidebar inboxCount={inboxCount} />
+              <TeamSidebar />
             </div>
           </div>
           {/* Main content — extra bottom padding on mobile for bottom nav */}
@@ -132,7 +133,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
           </main>
         </div>
         {/* Mobile bottom nav */}
-        <MobileNav inboxCount={inboxCount} />
+        <MobileNav />
       </div>
     </TeamProvider>
   );

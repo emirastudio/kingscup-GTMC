@@ -8,15 +8,13 @@ import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Menu, X,
   Mail, Shield, UserPlus, Plane, Shirt, FileText, UserCircle,
 } from "lucide-react";
+import { useTeam } from "@/lib/team-context";
 
-interface MobileNavProps {
-  inboxCount?: number;
-}
-
-export function MobileNav({ inboxCount }: MobileNavProps) {
+export function MobileNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { inboxCount } = useTeam();
 
   // Bottom bar — 5 main tabs
   const mainItems = [

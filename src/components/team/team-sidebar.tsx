@@ -17,6 +17,7 @@ import {
   FileText,
   UserCircle,
 } from "lucide-react";
+import { useTeam } from "@/lib/team-context";
 
 type NavGroup = {
   labelKey?: string;
@@ -25,12 +26,12 @@ type NavGroup = {
 
 interface TeamSidebarProps {
   className?: string;
-  inboxCount?: number;
 }
 
-export function TeamSidebar({ className, inboxCount }: TeamSidebarProps) {
+export function TeamSidebar({ className }: TeamSidebarProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const { inboxCount } = useTeam();
 
   const groups: NavGroup[] = [
     {

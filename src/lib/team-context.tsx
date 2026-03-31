@@ -7,6 +7,8 @@ type TeamContextType = {
   clubId: number | null;
   tournamentId: number | null;
   setTeamId: (id: number) => void;
+  inboxCount: number;
+  setInboxCount: (n: number) => void;
 };
 
 const TeamContext = createContext<TeamContextType>({
@@ -14,6 +16,8 @@ const TeamContext = createContext<TeamContextType>({
   clubId: null,
   tournamentId: null,
   setTeamId: () => {},
+  inboxCount: 0,
+  setInboxCount: () => {},
 });
 
 export function TeamProvider({
@@ -21,16 +25,19 @@ export function TeamProvider({
   initialTeamId,
   initialClubId,
   initialTournamentId,
+  initialInboxCount,
 }: {
   children: ReactNode;
   initialTeamId: number | null;
   initialClubId: number | null;
   initialTournamentId: number | null;
+  initialInboxCount: number;
 }) {
   const [teamId, setTeamId] = useState(initialTeamId);
+  const [inboxCount, setInboxCount] = useState(initialInboxCount);
 
   return (
-    <TeamContext.Provider value={{ teamId, clubId: initialClubId, tournamentId: initialTournamentId, setTeamId }}>
+    <TeamContext.Provider value={{ teamId, clubId: initialClubId, tournamentId: initialTournamentId, setTeamId, inboxCount, setInboxCount }}>
       {children}
     </TeamContext.Provider>
   );

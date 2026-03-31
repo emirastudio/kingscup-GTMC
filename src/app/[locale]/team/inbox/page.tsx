@@ -29,7 +29,7 @@ type Question = {
 
 export default function InboxPage() {
   const t = useTranslations("inbox");
-  const { teamId } = useTeam();
+  const { teamId, setInboxCount } = useTeam();
 
   const [tab, setTab] = useState<"messages" | "questions">("messages");
 
@@ -54,10 +54,14 @@ export default function InboxPage() {
   useEffect(() => {
     if (!teamId) return;
     fetch(`/api/teams/${teamId}/inbox`).then(async (res) => {
-      if (res.ok) setMessages(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+        setInboxCount(data.filter((m: { isRead: boolean }) => !m.isRead).length);
+      }
       setMessagesLoading(false);
     });
-  }, [teamId]);
+  }, [teamId, setInboxCount]);
 
   useEffect(() => {
     if (tab === "questions" && !questionsLoaded && teamId) {
@@ -77,7 +81,11 @@ export default function InboxPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageId: msgId }),
     });
-    setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, isRead: true } : m)));
+    setMessages((prev) => {
+      const updated = prev.map((m) => (m.id === msgId ? { ...m, isRead: true } : m));
+      setInboxCount(updated.filter((m) => !m.isRead).length);
+      return updated;
+    });
   }
 
   function handleOpen(msg: Message) {
