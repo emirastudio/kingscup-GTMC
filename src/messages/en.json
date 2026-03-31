@@ -313,7 +313,31 @@
     "hotelRooms": "Hotel",
     "transferBooked": "Transfer",
     "solve": "To do",
+    "done": "Done",
+    "goTo": "Go →",
     "responsiblePerson": "Responsible person on site",
+    "checklist": {
+      "hasPlayers": {
+        "hint": "Add at least one player. Players are registered on the Players page.",
+        "action": "Add players"
+      },
+      "hasStaff": {
+        "hint": "Add at least one staff member — coach, physio, or team manager.",
+        "action": "Add staff"
+      },
+      "hasResponsible": {
+        "hint": "Assign a staff member as responsible on site. Open the staff page and check the \"Responsible on site\" checkbox.",
+        "action": "Assign"
+      },
+      "hasTravel": {
+        "hint": "Fill in your arrival and departure details so we can arrange hotel check-in and transfer.",
+        "action": "Add travel details"
+      },
+      "hasOrders": {
+        "hint": "Answer the accommodation question above — confirm whether your team needs a hotel or not.",
+        "action": "Answer above"
+      }
+    }
     "financeSummary": "Finance Summary",
     "totalOrdered": "Total ordered",
     "totalPaid": "Paid",

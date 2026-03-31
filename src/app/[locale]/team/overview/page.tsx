@@ -10,7 +10,7 @@ import { useTeam } from "@/lib/team-context";
 import { Link } from "@/i18n/navigation";
 import {
   Users, Shield, UserPlus, Plane, ShoppingCart, CheckCircle, AlertTriangle,
-  Hotel, Bus, AlertCircle, MapPin, Utensils, Phone, Calendar, ExternalLink,
+  Hotel, Bus, AlertCircle, MapPin, Utensils, Phone, Calendar, ExternalLink, ArrowRight,
 } from "lucide-react";
 
 type TournamentInfo = {
@@ -391,12 +391,20 @@ export default function TeamOverviewPage() {
 
   const { counts, finance, checks, completionPercent, allergies, tournamentInfo: tInfo, assignedHotel } = data;
 
-  const checklist = [
-    { key: "hasPlayers", label: tn("players"), done: checks.hasPlayers, href: "/team/players", icon: Users },
-    { key: "hasStaff", label: tn("staff"), done: checks.hasStaff, href: "/team/staff", icon: Shield },
-    { key: "hasResponsible", label: t("responsiblePerson"), done: checks.hasResponsible, href: "/team/staff", icon: Shield },
-    { key: "hasTravel", label: tn("travel"), done: checks.hasTravel, href: "/team/travel", icon: Plane },
-    { key: "hasOrders", label: tn("booking"), done: data.accomConfirmed || data.accomDeclined, href: "/team/booking", icon: ShoppingCart },
+  type CheckKey = "hasPlayers" | "hasStaff" | "hasResponsible" | "hasTravel" | "hasOrders";
+
+  const checklist: {
+    key: CheckKey;
+    label: string;
+    done: boolean;
+    href: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { key: "hasPlayers",    label: tn("players"),          done: checks.hasPlayers,    href: "/team/players", icon: Users },
+    { key: "hasStaff",      label: tn("staff"),            done: checks.hasStaff,      href: "/team/staff",   icon: Shield },
+    { key: "hasResponsible",label: t("responsiblePerson"), done: checks.hasResponsible,href: "/team/staff",   icon: Shield },
+    { key: "hasTravel",     label: tn("travel"),           done: checks.hasTravel,     href: "/team/travel",  icon: Plane },
+    { key: "hasOrders",     label: tn("booking"),          done: data.accomConfirmed || data.accomDeclined, href: "/team/overview", icon: ShoppingCart },
   ];
 
   const balanceNum = parseFloat(finance.balance);
@@ -436,24 +444,39 @@ export default function TeamOverviewPage() {
         {/* Checklist */}
         <div className="mt-5 space-y-2">
           {checklist.map(({ key, label, done, href, icon: Icon }) => (
-            <Link
-              key={key}
-              href={href}
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-surface transition-colors"
-            >
-              {done ? (
+            done ? (
+              /* ── Done: compact row ── */
+              <div key={key} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-success/5">
                 <CheckCircle className="w-5 h-5 text-success shrink-0" />
-              ) : (
-                <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
-              )}
-              <Icon className="w-4 h-4 text-text-secondary" />
-              <span className="text-sm flex-1">{label}</span>
-              {done ? (
-                <Badge variant="success">{tc("confirm")}</Badge>
-              ) : (
-                <Badge variant="warning">{t("solve")}</Badge>
-              )}
-            </Link>
+                <Icon className="w-4 h-4 text-success/60 shrink-0" />
+                <span className="text-sm flex-1 text-text-primary">{label}</span>
+                <span className="text-xs font-medium text-success">{t("done")}</span>
+              </div>
+            ) : (
+              /* ── Not done: expanded with hint + CTA ── */
+              <div key={key} className="rounded-xl border border-warning/40 bg-warning/5 overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-center gap-3 px-3 pt-3 pb-1">
+                  <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
+                  <Icon className="w-4 h-4 text-warning/70 shrink-0" />
+                  <span className="text-sm font-semibold text-text-primary flex-1">{label}</span>
+                  <Badge variant="warning">{t("solve")}</Badge>
+                </div>
+                {/* Hint + action */}
+                <div className="flex items-end justify-between gap-3 px-3 pb-3 pt-1">
+                  <p className="text-xs text-text-secondary leading-relaxed flex-1">
+                    {t(`checklist.${key}.hint`)}
+                  </p>
+                  <Link
+                    href={href}
+                    className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-white bg-navy rounded-lg px-3 py-1.5 hover:bg-navy/90 transition-colors whitespace-nowrap"
+                  >
+                    {t(`checklist.${key}.action`)}
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            )
           ))}
         </div>
       </Card>

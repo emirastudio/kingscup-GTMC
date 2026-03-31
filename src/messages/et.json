@@ -312,7 +312,31 @@
     "hotelRooms": "Hotell",
     "transferBooked": "Transfer",
     "solve": "Täita",
+    "done": "Valmis",
+    "goTo": "Mine →",
     "responsiblePerson": "Vastutav isik kohapeal",
+    "checklist": {
+      "hasPlayers": {
+        "hint": "Lisa vähemalt üks mängija. Mängijad registreeritakse lehel „Mängijad".",
+        "action": "Lisa mängijad"
+      },
+      "hasStaff": {
+        "hint": "Lisa vähemalt üks töötaja — treener, füsioterapeut või meeskonna haldur.",
+        "action": "Lisa personal"
+      },
+      "hasResponsible": {
+        "hint": "Määra töötaja kohapeal vastutavaks. Ava personali leht ja märgi „Vastutav kohapeal".",
+        "action": "Määra"
+      },
+      "hasTravel": {
+        "hint": "Täida saabumis- ja lahkumisandmed, et saaksime korraldada hotelli sisseoeku ja transferi.",
+        "action": "Lisa reisiandmed"
+      },
+      "hasOrders": {
+        "hint": "Vasta ülal olevale majutusküsimusele — kinnita, kas meeskond vajab hotelli.",
+        "action": "Vasta ülal"
+      }
+    }
     "financeSummary": "Finantsülevaade",
     "totalOrdered": "Tellitud",
     "totalPaid": "Makstud",
