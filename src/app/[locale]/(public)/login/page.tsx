@@ -103,10 +103,17 @@ export default function LoginPage() {
         </form>
 
         {mode === "club" && (
-          <div className="mt-6 text-center">
-            <Link href="/club/register" className="text-sm text-navy hover:underline font-medium">
-              {t("registerNewClub")}
-            </Link>
+          <div className="mt-4 text-center space-y-2">
+            <div>
+              <Link href="/forgot-password" className="text-sm text-text-secondary hover:text-navy hover:underline">
+                {t("forgotPassword")}
+              </Link>
+            </div>
+            <div>
+              <Link href="/club/register" className="text-sm text-navy hover:underline font-medium">
+                {t("registerNewClub")}
+              </Link>
+            </div>
           </div>
         )}
       </Card>

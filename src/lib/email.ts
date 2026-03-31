@@ -87,6 +87,40 @@ export async function sendDeletionRequest({
   });
 }
 
+export async function sendPasswordReset({
+  to, toName, resetLink,
+}: { to: string; toName: string; resetLink: string }) {
+  await transporter.sendMail({
+    from: FROM,
+    to: `${toName} <${to}>`,
+    subject: `[Kings Cup] Password reset request`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+        <div style="background:#0f2044;padding:20px 24px;border-radius:8px 8px 0 0">
+          <h2 style="color:#fff;margin:0;font-size:18px">Kings Cup</h2>
+          <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px">Password Reset</p>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px;background:#fff">
+          <p style="color:#374151">Hi ${toName},</p>
+          <p style="color:#374151">We received a request to reset the password for your Kings Cup account.</p>
+          <p style="color:#374151">Click the button below to set a new password. This link is valid for <strong>1 hour</strong>.</p>
+          <div style="margin-top:24px;margin-bottom:24px">
+            <a href="${resetLink}"
+               style="background:#0f2044;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600">
+              Reset Password
+            </a>
+          </div>
+          <p style="color:#6b7280;font-size:13px">If you did not request a password reset, you can safely ignore this email. Your password will not change.</p>
+          <p style="color:#6b7280;font-size:13px">Link: <a href="${resetLink}" style="color:#0f2044">${resetLink}</a></p>
+        </div>
+        <p style="text-align:center;color:#9ca3af;font-size:11px;margin-top:16px">
+          Kings Cup · Organised by Football Planet · Powered by Goality TMC
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendNewQuestionNotification({
   teamName, subject, body, questionId,
 }: { teamName: string; subject: string; body: string; questionId: number }) {
