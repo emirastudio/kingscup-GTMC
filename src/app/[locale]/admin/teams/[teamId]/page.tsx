@@ -636,6 +636,8 @@ export default function AdminTeamDetailPage() {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // ─── Fetch ───────────────────────────────────────────────────────────────
 
@@ -760,6 +762,18 @@ export default function AdminTeamDetailPage() {
         setTimeout(() => setCopied(false), 2500);
       }
     } catch { /* silent */ }
+  }
+
+  async function handleDeleteTeam() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/teams/${teamId}`, { method: "DELETE" });
+      if (res.ok) {
+        router.push(`/${locale}/admin/teams`);
+      }
+    } catch { /* silent */ } finally {
+      setDeleting(false);
+    }
   }
 
   // ─── Loading / Error ─────────────────────────────────────────────────────
@@ -901,6 +915,33 @@ export default function AdminTeamDetailPage() {
                   <Calendar className="w-4 h-4" /> Schedule
                 </Button>
               </a>
+            )}
+
+            {/* Delete team */}
+            {confirmDelete ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-error font-medium">Delete team?</span>
+                <button
+                  onClick={handleDeleteTeam}
+                  disabled={deleting}
+                  className="text-xs font-semibold text-error border border-error/40 bg-red-50 hover:bg-red-100 rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {deleting ? "Deleting..." : "Yes, delete"}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs text-text-secondary hover:text-text-primary cursor-pointer px-1.5 py-1.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-error border border-border hover:border-error/40 rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
             )}
           </div>
         </div>

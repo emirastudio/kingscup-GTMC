@@ -4,6 +4,30 @@ import { teams } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ teamId: string }> }
+) {
+  const session = await getSession();
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { teamId } = await params;
+  const tid = parseInt(teamId);
+
+  const [deleted] = await db
+    .delete(teams)
+    .where(eq(teams.id, tid))
+    .returning();
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Team not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
