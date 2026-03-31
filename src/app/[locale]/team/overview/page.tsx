@@ -55,57 +55,75 @@ type OverviewData = {
 
 // ─── Accommodation Quest Card ─────────────────────────────────────────────────
 
-type AccomState = "unanswered" | "form" | "confirmed" | "declined";
-
 function AccommodationQuestCard({
   teamId,
-  initial,
+  accomConfirmed,
+  accomDeclined,
+  accomPlayers,
+  accomStaff,
+  accomAccompanying,
+  accomCheckIn,
+  accomCheckOut,
+  accomNotes,
   onUpdate,
 }: {
   teamId: string;
-  initial: Pick<OverviewData, "accomPlayers" | "accomStaff" | "accomAccompanying" | "accomCheckIn" | "accomCheckOut" | "accomNotes" | "accomDeclined" | "accomConfirmed">;
+  accomConfirmed: boolean;
+  accomDeclined: boolean;
+  accomPlayers: number;
+  accomStaff: number;
+  accomAccompanying: number;
+  accomCheckIn: string | null;
+  accomCheckOut: string | null;
+  accomNotes: string | null;
   onUpdate: () => void;
 }) {
   const ta = useTranslations("overview.accom");
-  const getInitialState = (): AccomState => {
-    if (initial.accomConfirmed) return "confirmed";
-    if (initial.accomDeclined) return "declined";
-    return "unanswered";
-  };
 
-  const [state, setState] = useState<AccomState>(getInitialState());
-  const [saving, setSaving] = useState(false);
+  // Локальный UI-стейт: открыта ли форма редактирования
+  const [formOpen, setFormOpen] = useState(false);
   const [confirmDecline, setConfirmDecline] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Form state — strings to avoid "012" issue with number inputs
-  const [players, setPlayers] = useState(String(initial.accomPlayers ?? 0));
-  const [staff, setStaff] = useState(String(initial.accomStaff ?? 0));
-  const [accompanying, setAccompanying] = useState(String(initial.accomAccompanying ?? 0));
-  const [checkIn, setCheckIn] = useState(initial.accomCheckIn ?? "");
-  const [checkOut, setCheckOut] = useState(initial.accomCheckOut ?? "");
-  const [notes, setNotes] = useState(initial.accomNotes ?? "");
+  // Поля формы — сбрасываются при смене команды (teamId)
+  const [players, setPlayers] = useState(String(accomPlayers ?? 0));
+  const [staff, setStaff] = useState(String(accomStaff ?? 0));
+  const [accompanying, setAccompanying] = useState(String(accomAccompanying ?? 0));
+  const [checkIn, setCheckIn] = useState(accomCheckIn ?? "");
+  const [checkOut, setCheckOut] = useState(accomCheckOut ?? "");
+  const [notes, setNotes] = useState(accomNotes ?? "");
 
-  // Summary data (used after confirmation)
-  const [summary, setSummary] = useState({
-    players: initial.accomPlayers ?? 0,
-    staff: initial.accomStaff ?? 0,
-    accompanying: initial.accomAccompanying ?? 0,
-    checkIn: initial.accomCheckIn ?? "",
-    checkOut: initial.accomCheckOut ?? "",
-    notes: initial.accomNotes ?? "",
-  });
+  // При смене команды — сбросить UI-стейт и поля формы
+  useEffect(() => {
+    setFormOpen(false);
+    setConfirmDecline(false);
+    setPlayers(String(accomPlayers ?? 0));
+    setStaff(String(accomStaff ?? 0));
+    setAccompanying(String(accomAccompanying ?? 0));
+    setCheckIn(accomCheckIn ?? "");
+    setCheckOut(accomCheckOut ?? "");
+    setNotes(accomNotes ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamId]);
+
+  // Состояние выводится из пропсов — никогда не рассинхронизируется с базой
+  const displayState = formOpen
+    ? "form"
+    : accomConfirmed
+    ? "confirmed"
+    : accomDeclined
+    ? "declined"
+    : "unanswered";
 
   async function patch(body: Record<string, unknown>) {
     setSaving(true);
     try {
-      const res = await fetch(`/api/teams/${teamId}/accommodation`, {
+      await fetch(`/api/teams/${teamId}/accommodation`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        onUpdate();
-      }
+      onUpdate();
     } finally {
       setSaving(false);
     }
@@ -125,33 +143,20 @@ function AccommodationQuestCard({
       accomDeclined: false,
       accomConfirmed: true,
     });
-    setSummary({ players: pNum, staff: sNum, accompanying: aNum, checkIn, checkOut, notes });
-    setState("confirmed");
+    setFormOpen(false);
   }
 
   async function handleDecline() {
-    await patch({
-      accomDeclined: true,
-      accomConfirmed: false,
-    });
-    setState("declined");
+    await patch({ accomDeclined: true, accomConfirmed: false });
     setConfirmDecline(false);
   }
 
-  function handleEdit() {
-    setState("form");
-  }
-
   function handleResetToUnanswered() {
-    patch({
-      accomDeclined: false,
-      accomConfirmed: false,
-    });
-    setState("unanswered");
+    patch({ accomDeclined: false, accomConfirmed: false });
   }
 
   // ── State 4: Declined ────────────────────────────────────────────────────────
-  if (state === "declined") {
+  if (displayState === "declined") {
     return (
       <div className="rounded-xl border-2 border-border bg-surface p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -172,7 +177,7 @@ function AccommodationQuestCard({
   }
 
   // ── State 3: Confirmed ───────────────────────────────────────────────────────
-  if (state === "confirmed") {
+  if (displayState === "confirmed") {
     return (
       <div className="rounded-xl border-2 border-success bg-emerald-50 p-5">
         <div className="flex items-start justify-between gap-4">
@@ -181,24 +186,24 @@ function AccommodationQuestCard({
             <div>
               <p className="text-base font-bold text-emerald-800 mb-1">{ta("confirmedTitle")}</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-emerald-700">
-                {summary.players > 0 && <span>{summary.players} {ta("players").toLowerCase()}</span>}
-                {summary.staff > 0 && <span>{summary.staff} {ta("staff").toLowerCase()}</span>}
-                {summary.accompanying > 0 && <span>{summary.accompanying} {ta("accompanying").toLowerCase()}</span>}
+                {accomPlayers > 0 && <span>{accomPlayers} {ta("players").toLowerCase()}</span>}
+                {accomStaff > 0 && <span>{accomStaff} {ta("staff").toLowerCase()}</span>}
+                {accomAccompanying > 0 && <span>{accomAccompanying} {ta("accompanying").toLowerCase()}</span>}
               </div>
-              {(summary.checkIn || summary.checkOut) && (
+              {(accomCheckIn || accomCheckOut) && (
                 <div className="mt-1.5 text-sm text-emerald-700">
-                  {summary.checkIn && <span>{ta("arrivalLabel")}: {summary.checkIn}</span>}
-                  {summary.checkIn && summary.checkOut && <span> · </span>}
-                  {summary.checkOut && <span>{ta("departureLabel")}: {summary.checkOut}</span>}
+                  {accomCheckIn && <span>{ta("arrivalLabel")}: {accomCheckIn}</span>}
+                  {accomCheckIn && accomCheckOut && <span> · </span>}
+                  {accomCheckOut && <span>{ta("departureLabel")}: {accomCheckOut}</span>}
                 </div>
               )}
-              {summary.notes && (
-                <p className="mt-1.5 text-xs text-emerald-600 italic">{summary.notes}</p>
+              {accomNotes && (
+                <p className="mt-1.5 text-xs text-emerald-600 italic">{accomNotes}</p>
               )}
             </div>
           </div>
           <button
-            onClick={handleEdit}
+            onClick={() => setFormOpen(true)}
             className="text-xs text-emerald-700 border border-emerald-300 rounded-lg px-3 py-1.5 hover:bg-emerald-100 transition-colors shrink-0 cursor-pointer"
           >
             {ta("editBtn")}
@@ -209,7 +214,7 @@ function AccommodationQuestCard({
   }
 
   // ── State 2: Form expanded ───────────────────────────────────────────────────
-  if (state === "form") {
+  if (displayState === "form") {
     return (
       <div className="rounded-xl border-2 border-amber-400 bg-amber-50 p-5 space-y-5">
         <div className="flex items-center gap-3">
@@ -292,7 +297,7 @@ function AccommodationQuestCard({
             {saving ? ta("saving") : ta("confirmBtn")}
           </button>
           <button
-            onClick={() => setState("unanswered")}
+            onClick={() => setFormOpen(false)}
             className="text-sm text-text-secondary hover:text-text-primary cursor-pointer"
           >
             {ta("cancel")}
@@ -335,7 +340,7 @@ function AccommodationQuestCard({
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() => setState("form")}
+            onClick={() => setFormOpen(true)}
             className="flex-1 bg-navy text-white font-semibold rounded-xl py-3 text-sm hover:bg-navy/90 transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             <CheckCircle className="w-4 h-4" /> {ta("yesBtn")}
@@ -402,18 +407,15 @@ export default function TeamOverviewPage() {
       {/* ── Accommodation Quest Card ── */}
       {teamId && (
         <AccommodationQuestCard
-          key={teamId}
           teamId={String(teamId)}
-          initial={{
-            accomPlayers: data.accomPlayers,
-            accomStaff: data.accomStaff,
-            accomAccompanying: data.accomAccompanying,
-            accomCheckIn: data.accomCheckIn,
-            accomCheckOut: data.accomCheckOut,
-            accomNotes: data.accomNotes,
-            accomDeclined: data.accomDeclined,
-            accomConfirmed: data.accomConfirmed,
-          }}
+          accomConfirmed={data.accomConfirmed}
+          accomDeclined={data.accomDeclined}
+          accomPlayers={data.accomPlayers}
+          accomStaff={data.accomStaff}
+          accomAccompanying={data.accomAccompanying}
+          accomCheckIn={data.accomCheckIn}
+          accomCheckOut={data.accomCheckOut}
+          accomNotes={data.accomNotes}
           onUpdate={fetchData}
         />
       )}

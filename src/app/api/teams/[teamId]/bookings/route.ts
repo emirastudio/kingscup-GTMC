@@ -107,6 +107,15 @@ export async function GET(
       accompanying: assignment.freeAccompanyingCount ?? 0,
       mealsOverride: assignment.mealsCountOverride ?? null,
     },
+    // Данные из квеста проживания (для автозаполнения)
+    questData: {
+      players: team.accomPlayers ?? 0,
+      staff: team.accomStaff ?? 0,
+      accompanying: team.accomAccompanying ?? 0,
+      checkIn: team.accomCheckIn ?? null,
+      checkOut: team.accomCheckOut ?? null,
+      confirmed: team.accomConfirmed ?? false,
+    },
   });
 }
 

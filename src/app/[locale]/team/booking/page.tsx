@@ -71,6 +71,7 @@ type BookingData = {
   bookings: SavedBooking[];
   overrides: ServiceOverride[];
   freeSlots: { players: number; staff: number; accompanying: number; mealsOverride: number | null };
+  questData: { players: number; staff: number; accompanying: number; checkIn: string | null; checkOut: string | null; confirmed: boolean };
 };
 
 type SavedBooking = {
@@ -280,12 +281,6 @@ export default function BookingPage() {
 
         if (json.available && json.bookings.length > 0) {
           // Restore existing bookings
-          const accBooking = json.bookings.find((b) => b.bookingType === "accommodation");
-          const staffBooking = json.bookings.find(
-            (b) => b.bookingType === "accommodation" && b.serviceId !== accBooking?.serviceId
-          );
-          void staffBooking;
-
           // Accommodation: multiple rows per option (players, staff, accompanying)
           // Notes: "players", "staff", "accompanying" (paid) or "players_free", "staff_free", "accompanying_free" (complimentary)
           const accRows = json.bookings.filter((b) => b.bookingType === "accommodation");
@@ -319,6 +314,29 @@ export default function BookingPage() {
           const xferRow = json.bookings.find((b) => b.bookingType === "transfer");
           if (xferRow) {
             setTransfer({ optionId: xferRow.serviceId, persons: xferRow.quantity || 1 });
+          }
+        } else if (json.available) {
+          // Бронирований ещё нет — автозаполнить из данных квеста проживания
+          const q = json.questData;
+          if (q.confirmed && (q.players > 0 || q.staff > 0 || q.accompanying > 0)) {
+            // Найти вариант проживания по датам из квеста (если есть)
+            let matchedOptionId: number | null = null;
+            if (q.checkIn && q.checkOut) {
+              const match = json.accommodation.find(
+                (a) =>
+                  a.checkIn?.startsWith(q.checkIn!) &&
+                  a.checkOut?.startsWith(q.checkOut!)
+              );
+              matchedOptionId = match?.id ?? json.accommodation[0]?.id ?? null;
+            } else if (json.accommodation.length === 1) {
+              matchedOptionId = json.accommodation[0].id;
+            }
+            setAccommodation({
+              optionId: matchedOptionId,
+              players: q.players,
+              staff: q.staff,
+              accompanying: q.accompanying,
+            });
           }
         }
       })
