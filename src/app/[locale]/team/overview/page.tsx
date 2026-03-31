@@ -14,11 +14,6 @@ import {
 } from "lucide-react";
 
 type TournamentInfo = {
-  hotelName: string | null;
-  hotelAddress: string | null;
-  hotelCheckIn: string | null;
-  hotelCheckOut: string | null;
-  hotelNotes: string | null;
   venueName: string | null;
   venueAddress: string | null;
   venueMapUrl: string | null;
@@ -497,13 +492,13 @@ export default function TeamOverviewPage() {
       </Card>
 
       {/* Tournament Info */}
-      {(assignedHotel || (tInfo && (tInfo.hotelName || tInfo.venueName || tInfo.mealTimes || tInfo.scheduleUrl || tInfo.emergencyContact))) && (
+      {(assignedHotel || (tInfo && (tInfo.venueName || tInfo.mealTimes || tInfo.scheduleUrl || tInfo.emergencyContact))) && (
         <Card>
           <CardTitle>🏆 Информация о турнире</CardTitle>
           <div className="mt-4 space-y-4">
 
-            {/* Assigned hotel (team-specific) */}
-            {assignedHotel ? (
+            {/* Assigned hotel (team-specific only) */}
+            {assignedHotel && (
               <div className="flex gap-3">
                 <Hotel className="w-5 h-5 text-navy shrink-0 mt-0.5" />
                 <div>
@@ -516,23 +511,7 @@ export default function TeamOverviewPage() {
                   {assignedHotel.notes && <p className="text-xs text-text-secondary italic mt-0.5">{assignedHotel.notes}</p>}
                 </div>
               </div>
-            ) : tInfo?.hotelName ? (
-              <div className="flex gap-3">
-                <Hotel className="w-5 h-5 text-navy shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">{tInfo.hotelName}</p>
-                  {tInfo.hotelAddress && <p className="text-sm text-text-secondary">{tInfo.hotelAddress}</p>}
-                  {(tInfo.hotelCheckIn || tInfo.hotelCheckOut) && (
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      {tInfo.hotelCheckIn && <>Check-in: {tInfo.hotelCheckIn}</>}
-                      {tInfo.hotelCheckIn && tInfo.hotelCheckOut && " · "}
-                      {tInfo.hotelCheckOut && <>Check-out: {tInfo.hotelCheckOut}</>}
-                    </p>
-                  )}
-                  {tInfo.hotelNotes && <p className="text-xs text-text-secondary italic mt-0.5">{tInfo.hotelNotes}</p>}
-                </div>
-              </div>
-            ) : null}
+            )}
 
             {/* Venue */}
             {tInfo?.venueName && (
