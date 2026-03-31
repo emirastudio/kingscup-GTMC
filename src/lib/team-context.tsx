@@ -9,6 +9,7 @@ type TeamContextType = {
   setTeamId: (id: number) => void;
   inboxCount: number;
   setInboxCount: (n: number) => void;
+  isTeamManager: boolean; // тренер команды — видит только свою команду
 };
 
 const TeamContext = createContext<TeamContextType>({
@@ -18,6 +19,7 @@ const TeamContext = createContext<TeamContextType>({
   setTeamId: () => {},
   inboxCount: 0,
   setInboxCount: () => {},
+  isTeamManager: false,
 });
 
 export function TeamProvider({
@@ -26,18 +28,20 @@ export function TeamProvider({
   initialClubId,
   initialTournamentId,
   initialInboxCount,
+  isTeamManager = false,
 }: {
   children: ReactNode;
   initialTeamId: number | null;
   initialClubId: number | null;
   initialTournamentId: number | null;
   initialInboxCount: number;
+  isTeamManager?: boolean;
 }) {
   const [teamId, setTeamId] = useState(initialTeamId);
   const [inboxCount, setInboxCount] = useState(initialInboxCount);
 
   return (
-    <TeamContext.Provider value={{ teamId, clubId: initialClubId, tournamentId: initialTournamentId, setTeamId, inboxCount, setInboxCount }}>
+    <TeamContext.Provider value={{ teamId, clubId: initialClubId, tournamentId: initialTournamentId, setTeamId, inboxCount, setInboxCount, isTeamManager }}>
       {children}
     </TeamContext.Provider>
   );

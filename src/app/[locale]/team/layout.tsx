@@ -67,8 +67,11 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
     })
   );
 
-  // Default to first team
-  const activeTeam = enrichedTeams[0];
+  // Тренер команды видит только свою команду
+  const isTeamManager = !!session.teamId;
+  const activeTeam = isTeamManager
+    ? enrichedTeams.find((t) => t.id === session.teamId) ?? enrichedTeams[0]
+    : enrichedTeams[0];
 
   // Unread inbox count for active team (only messages visible to this team)
   let inboxCount = 0;
@@ -103,6 +106,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
       initialClubId={club.id}
       initialTournamentId={club.tournamentId}
       initialInboxCount={inboxCount}
+      isTeamManager={isTeamManager}
     >
       <div className="flex flex-col min-h-screen">
         <TeamHeader
@@ -114,13 +118,28 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
           {/* Desktop sidebar */}
           <div className="hidden md:flex flex-col w-56 shrink-0 border-r border-border bg-white">
             <div className="p-4 border-b border-border">
-              <TeamSwitcher
-                clubName={club.name}
-                clubBadgeUrl={club.badgeUrl ?? null}
-                clubId={club.id}
-                teams={enrichedTeams}
-                classes={classes.map(c => ({ id: c.id, name: c.name }))}
-              />
+              {isTeamManager ? (
+                /* Тренер команды — показываем только название без переключения */
+                <div className="flex items-center gap-2.5 px-1">
+                  <div className="w-9 h-9 rounded-full bg-navy/10 border border-navy/20 flex items-center justify-center shrink-0">
+                    <span className="text-[11px] font-bold text-navy">
+                      {club.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-text-primary truncate leading-tight">{club.name}</p>
+                    <p className="text-[11px] text-text-secondary leading-tight truncate">{activeTeam?.name}</p>
+                  </div>
+                </div>
+              ) : (
+                <TeamSwitcher
+                  clubName={club.name}
+                  clubBadgeUrl={club.badgeUrl ?? null}
+                  clubId={club.id}
+                  teams={enrichedTeams}
+                  classes={classes.map(c => ({ id: c.id, name: c.name }))}
+                />
+              )}
             </div>
             <div className="p-3 flex-1">
               <TeamSidebar />

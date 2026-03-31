@@ -6,7 +6,8 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTeam } from "@/lib/team-context";
-import { User, Lock, Trash2 } from "lucide-react";
+import { User, Lock, Trash2, UserPlus, Copy, Check } from "lucide-react";
+import { useLocale } from "next-intl";
 
 type ClubProfile = {
   contactName: string | null;
@@ -16,7 +17,13 @@ type ClubProfile = {
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
-  const { clubId } = useTeam();
+  const { clubId, teamId, isTeamManager } = useTeam();
+  const locale = useLocale();
+
+  // Invite state (только для клубных администраторов)
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   // Contact info
   const [profile, setProfile] = useState<ClubProfile>({
@@ -274,6 +281,63 @@ export default function ProfilePage() {
           </>
         )}
       </Card>
+
+      {/* Invite team manager — только для клубных администраторов */}
+      {!isTeamManager && teamId && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <UserPlus className="w-5 h-5 text-navy" />
+            <CardTitle>{t("inviteManager")}</CardTitle>
+          </div>
+          <p className="text-sm text-text-secondary mb-4">{t("inviteManagerDesc")}</p>
+
+          {inviteToken ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={`${window.location.origin}/${locale}/invite/${inviteToken}`}
+                  className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-secondary font-mono"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/${locale}/invite/${inviteToken}`);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2000);
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface transition-colors"
+                >
+                  {inviteCopied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                  {inviteCopied ? t("copied") : t("copy")}
+                </button>
+              </div>
+              <p className="text-xs text-text-secondary">{t("inviteLinkExpiry")}</p>
+              <Button
+                variant="ghost"
+                onClick={() => setInviteToken(null)}
+              >
+                {t("generateNew")}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={async () => {
+                setInviteLoading(true);
+                const res = await fetch(`/api/teams/${teamId}/invite`, { method: "POST" });
+                if (res.ok) {
+                  const data = await res.json();
+                  setInviteToken(data.token);
+                }
+                setInviteLoading(false);
+              }}
+              disabled={inviteLoading}
+            >
+              <UserPlus className="w-4 h-4" />
+              {inviteLoading ? "..." : t("generateLink")}
+            </Button>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

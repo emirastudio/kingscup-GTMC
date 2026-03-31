@@ -292,7 +292,14 @@
     "deleteAccount": "Kustuta konto",
     "deleteWarning": "See saadab kustutamistaotluse korraldajale. Teie andmed eemaldatakse pärast kinnitamist.",
     "requestDeletion": "Taotle konto kustutamist",
-    "deletionSent": "Kustutamistaotlus saadetud. Võtame teiega peatselt ühendust."
+    "deletionSent": "Kustutamistaotlus saadetud. Võtame teiega peatselt ühendust.",
+    "inviteManager": "Kutsu meeskonna treener",
+    "inviteManagerDesc": "Jaga seda linki treeneriga — ta loob oma konto ja näeb ainult seda meeskonda.",
+    "generateLink": "Loo kutselink",
+    "generateNew": "Loo uus link",
+    "copy": "Kopeeri",
+    "copied": "Kopeeritud!",
+    "inviteLinkExpiry": "Link kehtib 7 päeva."
   },
   "documents": {
     "title": "Dokumendid",
@@ -458,5 +465,21 @@
       "sentMessages": "Saadetud sõnumid",
       "noMessages": "Sõnumeid pole veel saadetud"
     }
+  },
+  "invite": {
+    "loading": "Laadimine...",
+    "invalid": "Vigane või aegunud kutselink.",
+    "expired": "Kutselingi kehtivusaeg on lõppenud.",
+    "contactOrganizer": "Võtke ühendust klubi administraatoriga uue kutse saamiseks.",
+    "title": "Loo konto",
+    "subtitle": "Teid on kutsutud haldama meeskonda {team} klubist {club}.",
+    "name": "Sinu nimi",
+    "namePlaceholder": "Jaan Tamm",
+    "email": "E-post",
+    "password": "Parool",
+    "passwordPlaceholder": "Vähemalt 6 tähemärki",
+    "passwordTooShort": "Parool peab olema vähemalt 6 tähemärki.",
+    "createAccount": "Loo konto ja logi sisse",
+    "acceptError": "Konto loomine ebaõnnestus. Link võib olla juba kasutatud."
   }
 }

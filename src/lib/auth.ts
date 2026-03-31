@@ -10,6 +10,7 @@ export type TokenPayload = {
   role: "admin" | "club";
   clubId?: number;
   tournamentId?: number;
+  teamId?: number; // если задан — пользователь является тренером конкретной команды
 };
 
 export async function hashPassword(password: string) {

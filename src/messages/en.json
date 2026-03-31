@@ -293,7 +293,14 @@
     "deleteAccount": "Delete Account",
     "deleteWarning": "This will send a deletion request to the organizer. Your data will be removed after confirmation.",
     "requestDeletion": "Request Account Deletion",
-    "deletionSent": "Deletion request sent. We will contact you shortly."
+    "deletionSent": "Deletion request sent. We will contact you shortly.",
+    "inviteManager": "Invite Team Manager",
+    "inviteManagerDesc": "Share this link with a coach or manager — they will create their own account and see only this team.",
+    "generateLink": "Generate Invite Link",
+    "generateNew": "Generate New Link",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "inviteLinkExpiry": "The link is valid for 7 days."
   },
   "documents": {
     "title": "Documents",
@@ -502,5 +509,21 @@
       "airportHotel": "Airport ↔ Hotel",
       "fullTransfer": "Full transfer"
     }
+  },
+  "invite": {
+    "loading": "Loading...",
+    "invalid": "Invalid or expired invite link.",
+    "expired": "This invite link has expired.",
+    "contactOrganizer": "Please contact the club administrator for a new invite.",
+    "title": "Create your account",
+    "subtitle": "You have been invited to manage {team} from {club}.",
+    "name": "Your name",
+    "namePlaceholder": "John Smith",
+    "email": "Email",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "createAccount": "Create Account & Sign In",
+    "acceptError": "Failed to create account. The link may have already been used."
   }
 }

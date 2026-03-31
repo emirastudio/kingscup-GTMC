@@ -157,17 +157,33 @@ export const clubs = pgTable("clubs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// ─── Club Users (login — one account per club) ─────────
+// ─── Club Users (login — club admin OR team manager) ───
 export const clubUsers = pgTable("club_users", {
   id: serial("id").primaryKey(),
   clubId: integer("club_id")
     .references(() => clubs.id, { onDelete: "cascade" })
     .notNull(),
+  // null = клубный администратор (видит все команды)
+  // число = тренер команды (видит только свою)
+  teamId: integer("team_id"),
   email: text("email").notNull(),
   name: text("name"),
   passwordHash: text("password_hash"),
   accessLevel: accessLevelEnum("access_level").default("write").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Team Invites ───────────────────────────────────────
+export const teamInvites = pgTable("team_invites", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id")
+    .references(() => clubs.id, { onDelete: "cascade" })
+    .notNull(),
+  teamId: integer("team_id").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
 });
 
 // ─── Teams (belongs to a club) ──────────────────────────

@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
     role: "club",
     clubId: user.clubId,
     tournamentId: club?.tournamentId,
+    ...(user.teamId ? { teamId: user.teamId } : {}),
   });
 
   await setSessionCookie(token);
 
-  return NextResponse.json({ ok: true, clubId: user.clubId });
+  return NextResponse.json({ ok: true, clubId: user.clubId, teamId: user.teamId ?? null });
 }
