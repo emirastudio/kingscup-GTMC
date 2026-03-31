@@ -141,6 +141,7 @@ Football Planet`;
         subject: welcomeSubject,
         body: welcomeBody,
         sendToAll: false,
+        sentBy: 0, // 0 = system message
       })
       .returning();
     await db.insert(messageRecipients).values({
