@@ -542,19 +542,19 @@ export default function AdminTournamentsPage() {
           active={tab === "fields"}
           onClick={() => setTab("fields")}
           icon={Info}
-          label="Поля"
+          label="Fields"
         />
         <SectionTab
           active={tab === "hotels"}
           onClick={() => setTab("hotels")}
           icon={Info}
-          label="Отели"
+          label="Hotels"
         />
         <SectionTab
           active={tab === "info"}
           onClick={() => setTab("info")}
           icon={Info}
-          label="Доп. инфо"
+          label="Info"
         />
       </div>
 
@@ -656,7 +656,7 @@ export default function AdminTournamentsPage() {
                       Name
                     </th>
                     <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase">
-                      Формат
+                      Format
                     </th>
                     <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase">
                       Min Birth Year
@@ -957,16 +957,16 @@ export default function AdminTournamentsPage() {
       {tab === "fields" && (
         <Card padding={false}>
           <div className="p-6 border-b border-border flex items-center justify-between">
-            <CardTitle>⚽ Поля / Базы</CardTitle>
+            <CardTitle>⚽ Pitches / Bases</CardTitle>
             <Button size="sm" onClick={addField}>
               <Plus className="w-4 h-4" />
-              Добавить поле
+              Add pitch
             </Button>
           </div>
           <div className="divide-y divide-border">
             {fields.filter((f) => !f._deleted).length === 0 && (
               <div className="text-center py-10 text-text-secondary text-sm">
-                Нет полей. Нажмите &quot;Добавить поле&quot;.
+                No pitches defined. Click &quot;Add pitch&quot; to create one.
               </div>
             )}
             {fields.map((field, idx) =>
@@ -978,7 +978,7 @@ export default function AdminTournamentsPage() {
                       type="text"
                       value={field.name}
                       onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, name: e.target.value } : f))}
-                      placeholder="Название поля / базы"
+                      placeholder="Pitch / base name"
                       className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-medium focus:outline-none focus:border-navy"
                     />
                     <button
@@ -994,28 +994,28 @@ export default function AdminTournamentsPage() {
                       type="text"
                       value={field.address}
                       onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, address: e.target.value } : f))}
-                      placeholder="Адрес"
+                      placeholder="Address"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
                       type="url"
                       value={field.mapUrl}
                       onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, mapUrl: e.target.value } : f))}
-                      placeholder="Ссылка на карту (Google Maps)"
+                      placeholder="Map link (Google Maps)"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
                       type="url"
                       value={field.scheduleUrl}
                       onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, scheduleUrl: e.target.value } : f))}
-                      placeholder="Ссылка на расписание / автобусы"
+                      placeholder="Schedule / bus link"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
                       type="text"
                       value={field.notes}
                       onChange={(e) => setFields((prev) => prev.map((f, i) => i === idx ? { ...f, notes: e.target.value } : f))}
-                      placeholder="Доп. информация"
+                      placeholder="Additional info"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                   </div>
@@ -1033,16 +1033,16 @@ export default function AdminTournamentsPage() {
       {tab === "hotels" && (
         <Card padding={false}>
           <div className="p-6 border-b border-border flex items-center justify-between">
-            <CardTitle>🏨 Отели</CardTitle>
+            <CardTitle>🏨 Hotels</CardTitle>
             <Button size="sm" onClick={addHotel}>
               <Plus className="w-4 h-4" />
-              Добавить отель
+              Add hotel
             </Button>
           </div>
           <div className="divide-y divide-border">
             {hotels.filter((h) => !h._deleted).length === 0 && (
               <div className="text-center py-10 text-text-secondary text-sm">
-                Нет отелей. Нажмите &quot;Добавить отель&quot;.
+                No hotels yet. Click &quot;Add hotel&quot; to create one.
               </div>
             )}
             {hotels.map((hotel, idx) =>
@@ -1054,7 +1054,7 @@ export default function AdminTournamentsPage() {
                       type="text"
                       value={hotel.name}
                       onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, name: e.target.value } : h))}
-                      placeholder="Название отеля"
+                      placeholder="Hotel name"
                       className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-medium focus:outline-none focus:border-navy"
                     />
                     <button
@@ -1070,21 +1070,21 @@ export default function AdminTournamentsPage() {
                       type="text"
                       value={hotel.address}
                       onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, address: e.target.value } : h))}
-                      placeholder="Адрес"
+                      placeholder="Address"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
                       type="text"
                       value={hotel.contactName}
                       onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, contactName: e.target.value } : h))}
-                      placeholder="Контактное лицо"
+                      placeholder="Contact person"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
                       type="tel"
                       value={hotel.contactPhone}
                       onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, contactPhone: e.target.value } : h))}
-                      placeholder="Телефон"
+                      placeholder="Phone"
                       className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                     />
                     <input
@@ -1099,7 +1099,7 @@ export default function AdminTournamentsPage() {
                         type="text"
                         value={hotel.notes}
                         onChange={(e) => setHotels((prev) => prev.map((h, i) => i === idx ? { ...h, notes: e.target.value } : h))}
-                        placeholder="Заметки (завтрак, парковка, etc.)"
+                        placeholder="Notes (breakfast, parking, etc.)"
                         className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:border-navy"
                       />
                     </div>
@@ -1119,20 +1119,20 @@ export default function AdminTournamentsPage() {
         <div className="space-y-5">
           {/* Hotel */}
           <Card>
-            <CardTitle>🏨 Отель / Проживание</CardTitle>
+            <CardTitle>🏨 General Hotel Info</CardTitle>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input id="hotelName" label="Название отеля" value={tInfo.hotelName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelName: e.target.value }))} placeholder="Radisson Blu Hotel" />
-              <Input id="hotelAddress" label="Адрес" value={tInfo.hotelAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelAddress: e.target.value }))} placeholder="ул. Примерная, 1, Таллинн" />
-              <Input id="hotelCheckIn" label="Check-in (время)" value={tInfo.hotelCheckIn ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckIn: e.target.value }))} placeholder="14:00, 15 мая" />
-              <Input id="hotelCheckOut" label="Check-out (время)" value={tInfo.hotelCheckOut ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckOut: e.target.value }))} placeholder="12:00, 18 мая" />
+              <Input id="hotelName" label="Hotel name" value={tInfo.hotelName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelName: e.target.value }))} placeholder="Radisson Blu Hotel" />
+              <Input id="hotelAddress" label="Address" value={tInfo.hotelAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelAddress: e.target.value }))} placeholder="Example St. 1, Tallinn" />
+              <Input id="hotelCheckIn" label="Check-in time" value={tInfo.hotelCheckIn ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckIn: e.target.value }))} placeholder="14:00, 15 May" />
+              <Input id="hotelCheckOut" label="Check-out time" value={tInfo.hotelCheckOut ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, hotelCheckOut: e.target.value }))} placeholder="12:00, 18 May" />
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-text-primary mb-1.5">Заметки об отеле</label>
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Hotel notes</label>
                 <textarea
                   rows={2}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
                   value={tInfo.hotelNotes ?? ""}
                   onChange={(e) => setTInfo((p) => ({ ...p, hotelNotes: e.target.value }))}
-                  placeholder="Завтрак включён, парковка бесплатная..."
+                  placeholder="Breakfast included, free parking..."
                 />
               </div>
             </div>
@@ -1140,30 +1140,30 @@ export default function AdminTournamentsPage() {
 
           {/* Venue */}
           <Card>
-            <CardTitle>⚽ Стадион / Футбольные поля</CardTitle>
+            <CardTitle>⚽ Venue / Pitches</CardTitle>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input id="venueName" label="Название стадиона" value={tInfo.venueName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueName: e.target.value }))} placeholder="A. Le Coq Arena" />
-              <Input id="venueAddress" label="Адрес" value={tInfo.venueAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueAddress: e.target.value }))} placeholder="Asula 4c, Таллинн" />
+              <Input id="venueName" label="Venue name" value={tInfo.venueName ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueName: e.target.value }))} placeholder="A. Le Coq Arena" />
+              <Input id="venueAddress" label="Address" value={tInfo.venueAddress ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueAddress: e.target.value }))} placeholder="Asula 4c, Tallinn" />
               <div className="md:col-span-2">
-                <Input id="venueMapUrl" label="Ссылка на карту (Google Maps / Waze)" value={tInfo.venueMapUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueMapUrl: e.target.value }))} placeholder="https://maps.google.com/..." />
+                <Input id="venueMapUrl" label="Map link (Google Maps / Waze)" value={tInfo.venueMapUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, venueMapUrl: e.target.value }))} placeholder="https://maps.google.com/..." />
               </div>
             </div>
           </Card>
 
           {/* Meals */}
           <Card>
-            <CardTitle>🍽️ Питание</CardTitle>
+            <CardTitle>🍽️ Meals</CardTitle>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input id="mealTimes" label="Время питания" value={tInfo.mealTimes ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealTimes: e.target.value }))} placeholder="Завтрак 7:30-9:00, Обед 13:00, Ужин 19:00" />
-              <Input id="mealLocation" label="Место питания" value={tInfo.mealLocation ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealLocation: e.target.value }))} placeholder="Ресторан отеля, 1 этаж" />
+              <Input id="mealTimes" label="Meal times" value={tInfo.mealTimes ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealTimes: e.target.value }))} placeholder="Breakfast 7:30-9:00, Lunch 13:00, Dinner 19:00" />
+              <Input id="mealLocation" label="Meal location" value={tInfo.mealLocation ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, mealLocation: e.target.value }))} placeholder="Hotel restaurant, 1st floor" />
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-text-primary mb-1.5">Заметки по питанию</label>
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Meal notes</label>
                 <textarea
                   rows={2}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
                   value={tInfo.mealNotes ?? ""}
                   onChange={(e) => setTInfo((p) => ({ ...p, mealNotes: e.target.value }))}
-                  placeholder="Вегетарианское меню по запросу..."
+                  placeholder="Vegetarian menu available on request..."
                 />
               </div>
             </div>
@@ -1171,31 +1171,31 @@ export default function AdminTournamentsPage() {
 
           {/* Schedule */}
           <Card>
-            <CardTitle>📅 Расписание</CardTitle>
+            <CardTitle>📅 Schedule</CardTitle>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Input id="scheduleUrl" label="Ссылка на расписание" value={tInfo.scheduleUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleUrl: e.target.value }))} placeholder="https://..." />
+                <Input id="scheduleUrl" label="Schedule URL" value={tInfo.scheduleUrl ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleUrl: e.target.value }))} placeholder="https://..." />
               </div>
               <div className="md:col-span-2">
-                <Input id="scheduleDescription" label="Описание" value={tInfo.scheduleDescription ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleDescription: e.target.value }))} placeholder="Полное расписание матчей и мероприятий" />
+                <Input id="scheduleDescription" label="Description" value={tInfo.scheduleDescription ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, scheduleDescription: e.target.value }))} placeholder="Full match and event schedule" />
               </div>
             </div>
           </Card>
 
           {/* Emergency & Notes */}
           <Card>
-            <CardTitle>🚨 Экстренный контакт</CardTitle>
+            <CardTitle>🚨 Emergency Contact</CardTitle>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input id="emergencyContact" label="Имя / Должность" value={tInfo.emergencyContact ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyContact: e.target.value }))} placeholder="Иван Иванов, организатор" />
-              <Input id="emergencyPhone" label="Телефон" value={tInfo.emergencyPhone ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyPhone: e.target.value }))} placeholder="+372 5555 1234" />
+              <Input id="emergencyContact" label="Name / Role" value={tInfo.emergencyContact ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyContact: e.target.value }))} placeholder="John Smith, organizer" />
+              <Input id="emergencyPhone" label="Phone" value={tInfo.emergencyPhone ?? ""} onChange={(e) => setTInfo((p) => ({ ...p, emergencyPhone: e.target.value }))} placeholder="+372 5555 1234" />
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-text-primary mb-1.5">Дополнительные заметки для команд</label>
+                <label className="block text-sm font-medium text-text-primary mb-1.5">Additional notes for teams</label>
                 <textarea
                   rows={3}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy resize-none"
                   value={tInfo.additionalNotes ?? ""}
                   onChange={(e) => setTInfo((p) => ({ ...p, additionalNotes: e.target.value }))}
-                  placeholder="Важная информация для всех участников..."
+                  placeholder="Important information for all participants..."
                 />
               </div>
             </div>

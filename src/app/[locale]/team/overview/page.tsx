@@ -494,7 +494,7 @@ export default function TeamOverviewPage() {
       {/* Tournament Info */}
       {(assignedHotel || (tInfo && (tInfo.venueName || tInfo.mealTimes || tInfo.scheduleUrl || tInfo.emergencyContact))) && (
         <Card>
-          <CardTitle>🏆 Информация о турнире</CardTitle>
+          <CardTitle>🏆 {t("tournamentInfoTitle")}</CardTitle>
           <div className="mt-4 space-y-4">
 
             {/* Assigned hotel (team-specific only) */}
@@ -504,7 +504,7 @@ export default function TeamOverviewPage() {
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{assignedHotel.name}</p>
                   {assignedHotel.address && <p className="text-sm text-text-secondary">{assignedHotel.address}</p>}
-                  {assignedHotel.contactName && <p className="text-xs text-text-secondary mt-0.5">Контакт: {assignedHotel.contactName}</p>}
+                  {assignedHotel.contactName && <p className="text-xs text-text-secondary mt-0.5">{t("contact")}: {assignedHotel.contactName}</p>}
                   {assignedHotel.contactPhone && (
                     <a href={`tel:${assignedHotel.contactPhone}`} className="text-xs text-navy hover:underline block mt-0.5">{assignedHotel.contactPhone}</a>
                   )}
@@ -527,7 +527,7 @@ export default function TeamOverviewPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-navy hover:underline mt-0.5"
                     >
-                      <ExternalLink className="w-3 h-3" /> На карте
+                      <ExternalLink className="w-3 h-3" /> {t("onMap")}
                     </a>
                   )}
                 </div>
@@ -539,7 +539,7 @@ export default function TeamOverviewPage() {
               <div className="flex gap-3">
                 <Utensils className="w-5 h-5 text-navy shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-text-primary">Питание</p>
+                  <p className="text-sm font-semibold text-text-primary">{t("meals")}</p>
                   <p className="text-sm text-text-secondary">{tInfo.mealTimes}</p>
                   {tInfo.mealLocation && <p className="text-xs text-text-secondary">{tInfo.mealLocation}</p>}
                   {tInfo.mealNotes && <p className="text-xs text-text-secondary italic">{tInfo.mealNotes}</p>}
@@ -552,7 +552,7 @@ export default function TeamOverviewPage() {
               <div className="flex gap-3">
                 <Calendar className="w-5 h-5 text-navy shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-text-primary">Расписание</p>
+                  <p className="text-sm font-semibold text-text-primary">{t("schedule")}</p>
                   {tInfo.scheduleDescription && <p className="text-sm text-text-secondary">{tInfo.scheduleDescription}</p>}
                   <a
                     href={tInfo.scheduleUrl}
@@ -560,7 +560,7 @@ export default function TeamOverviewPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-navy hover:underline mt-0.5"
                   >
-                    <ExternalLink className="w-3 h-3" /> Открыть расписание
+                    <ExternalLink className="w-3 h-3" /> {t("openSchedule")}
                   </a>
                 </div>
               </div>
@@ -571,7 +571,7 @@ export default function TeamOverviewPage() {
               <div className="flex gap-3 bg-red-50 rounded-lg p-3 -mx-1">
                 <Phone className="w-5 h-5 text-error shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-error">Экстренный контакт</p>
+                  <p className="text-sm font-semibold text-error">{t("emergencyContact")}</p>
                   <p className="text-sm text-text-primary">{tInfo.emergencyContact}</p>
                   {tInfo.emergencyPhone && (
                     <a href={`tel:${tInfo.emergencyPhone}`} className="text-sm font-medium text-error hover:underline">

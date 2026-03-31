@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
-  Building2,
   MapPin,
   UtensilsCrossed,
   Phone,
@@ -22,11 +21,6 @@ interface TournamentInfoData {
   tournamentId: number;
   scheduleUrl?: string | null;
   scheduleDescription?: string | null;
-  hotelName?: string | null;
-  hotelAddress?: string | null;
-  hotelCheckIn?: string | null;
-  hotelCheckOut?: string | null;
-  hotelNotes?: string | null;
   venueName?: string | null;
   venueAddress?: string | null;
   venueMapUrl?: string | null;
@@ -103,11 +97,6 @@ export default function AdminSettingsPage() {
   /* form fields */
   const [scheduleUrl, setScheduleUrl] = useState("");
   const [scheduleDescription, setScheduleDescription] = useState("");
-  const [hotelName, setHotelName] = useState("");
-  const [hotelAddress, setHotelAddress] = useState("");
-  const [hotelCheckIn, setHotelCheckIn] = useState("");
-  const [hotelCheckOut, setHotelCheckOut] = useState("");
-  const [hotelNotes, setHotelNotes] = useState("");
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [venueMapUrl, setVenueMapUrl] = useState("");
@@ -128,11 +117,6 @@ export default function AdminSettingsPage() {
       const d: TournamentInfoData = await res.json();
       setScheduleUrl(d.scheduleUrl ?? "");
       setScheduleDescription(d.scheduleDescription ?? "");
-      setHotelName(d.hotelName ?? "");
-      setHotelAddress(d.hotelAddress ?? "");
-      setHotelCheckIn(d.hotelCheckIn ?? "");
-      setHotelCheckOut(d.hotelCheckOut ?? "");
-      setHotelNotes(d.hotelNotes ?? "");
       setVenueName(d.venueName ?? "");
       setVenueAddress(d.venueAddress ?? "");
       setVenueMapUrl(d.venueMapUrl ?? "");
@@ -165,11 +149,6 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           scheduleUrl: scheduleUrl || null,
           scheduleDescription: scheduleDescription || null,
-          hotelName: hotelName || null,
-          hotelAddress: hotelAddress || null,
-          hotelCheckIn: hotelCheckIn || null,
-          hotelCheckOut: hotelCheckOut || null,
-          hotelNotes: hotelNotes || null,
           venueName: venueName || null,
           venueAddress: venueAddress || null,
           venueMapUrl: venueMapUrl || null,
@@ -247,52 +226,6 @@ export default function AdminSettingsPage() {
             value={scheduleDescription}
             onChange={setScheduleDescription}
             placeholder="Brief description of the tournament schedule"
-          />
-        </div>
-      </Card>
-
-      {/* ─── Hotel ─── */}
-      <Card>
-        <SectionHeader icon={Building2} title="Hotel" />
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              id="hotelName"
-              label="Hotel name"
-              value={hotelName}
-              onChange={(e) => setHotelName(e.target.value)}
-              placeholder="e.g. Grand Hotel Tallinn"
-            />
-            <Input
-              id="hotelAddress"
-              label="Address"
-              value={hotelAddress}
-              onChange={(e) => setHotelAddress(e.target.value)}
-              placeholder="Full address"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              id="hotelCheckIn"
-              label="Check-in time"
-              value={hotelCheckIn}
-              onChange={(e) => setHotelCheckIn(e.target.value)}
-              placeholder="14:00"
-            />
-            <Input
-              id="hotelCheckOut"
-              label="Check-out time"
-              value={hotelCheckOut}
-              onChange={(e) => setHotelCheckOut(e.target.value)}
-              placeholder="11:00"
-            />
-          </div>
-          <Textarea
-            id="hotelNotes"
-            label="Notes"
-            value={hotelNotes}
-            onChange={setHotelNotes}
-            placeholder="Additional hotel information"
           />
         </div>
       </Card>

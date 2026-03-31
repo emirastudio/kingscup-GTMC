@@ -264,6 +264,13 @@
     "totalPaid": "Оплачено",
     "balanceLabel": "Баланс",
     "allergiesTitle": "Аллергии и диета",
+    "tournamentInfoTitle": "Информация о турнире",
+    "contact": "Контакт",
+    "onMap": "На карте",
+    "meals": "Питание",
+    "schedule": "Расписание",
+    "openSchedule": "Открыть расписание",
+    "emergencyContact": "Экстренный контакт",
     "accom": {
       "questTitle": "Нужно ли вашей команде проживание?",
       "questSubtitle": "Срочно! Нам нужно знать количество мест для бронирования отеля.",

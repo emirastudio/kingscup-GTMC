@@ -264,6 +264,13 @@
     "totalPaid": "Paid",
     "balanceLabel": "Balance",
     "allergiesTitle": "Allergies & Dietary",
+    "tournamentInfoTitle": "Tournament Info",
+    "contact": "Contact",
+    "onMap": "On map",
+    "meals": "Meals",
+    "schedule": "Schedule",
+    "openSchedule": "Open schedule",
+    "emergencyContact": "Emergency contact",
     "accom": {
       "questTitle": "Does your team need accommodation?",
       "questSubtitle": "Urgent! We need to know the number of places to book the hotel.",

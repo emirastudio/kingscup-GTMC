@@ -231,6 +231,13 @@
     "totalPaid": "Makstud",
     "balanceLabel": "Saldo",
     "allergiesTitle": "Allergia ja dieet",
+    "tournamentInfoTitle": "Turniiri info",
+    "contact": "Kontakt",
+    "onMap": "Kaardil",
+    "meals": "Toit",
+    "schedule": "Ajakava",
+    "openSchedule": "Ava ajakava",
+    "emergencyContact": "Hädaabi kontakt",
     "accom": {
       "questTitle": "Kas teie meeskond vajab majutust?",
       "questSubtitle": "Kiireloomuline! Meil on vaja teada kohtade arvu hotelli broneerimiseks.",
