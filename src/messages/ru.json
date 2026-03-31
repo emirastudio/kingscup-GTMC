@@ -53,7 +53,8 @@
     "tournaments": "Турниры",
     "payments": "Платежи",
     "services": "Услуги",
-    "packages": "Пакеты"
+    "packages": "Пакеты",
+    "profile": "Профиль"
   },
   "team": {
     "regNumber": "Регистрационный номер",
@@ -245,8 +246,31 @@
   },
   "inbox": {
     "title": "Входящие",
-    "description": "Все сообщения, отправленные вашей команде",
-    "noMessages": "Сообщений пока нет"
+    "description": "Сообщения от организатора и ваши вопросы",
+    "noMessages": "Сообщений пока нет",
+    "messagesTab": "Сообщения",
+    "questionsTab": "Наши вопросы",
+    "askQuestion": "Задать вопрос",
+    "questionSubject": "Тема",
+    "questionBody": "Ваш вопрос",
+    "questionSent": "Вопрос отправлен!",
+    "noQuestions": "Вопросов пока нет",
+    "pending": "Ожидает ответа",
+    "answered": "Отвечен",
+    "reply": "Новое"
+  },
+  "profile": {
+    "title": "Профиль",
+    "contactInfo": "Контактная информация",
+    "changePassword": "Изменить пароль",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "confirmPassword": "Подтвердить пароль",
+    "passwordChanged": "Пароль изменён!",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteWarning": "Это отправит запрос на удаление организатору. Ваши данные будут удалены после подтверждения.",
+    "requestDeletion": "Запросить удаление аккаунта",
+    "deletionSent": "Запрос на удаление отправлен. Мы свяжемся с вами в ближайшее время."
   },
   "documents": {
     "title": "Документы",

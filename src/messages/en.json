@@ -53,7 +53,8 @@
     "tournaments": "Tournaments",
     "payments": "Payments",
     "services": "Services",
-    "packages": "Packages"
+    "packages": "Packages",
+    "profile": "Profile"
   },
   "team": {
     "regNumber": "Registration number",
@@ -245,8 +246,31 @@
   },
   "inbox": {
     "title": "Inbox",
-    "description": "All messages sent to your team are displayed here",
-    "noMessages": "No messages yet"
+    "description": "Messages from the organizer and your questions",
+    "noMessages": "No messages yet",
+    "messagesTab": "Messages",
+    "questionsTab": "Our Questions",
+    "askQuestion": "Ask a Question",
+    "questionSubject": "Subject",
+    "questionBody": "Your question",
+    "questionSent": "Question sent!",
+    "noQuestions": "No questions yet",
+    "pending": "Awaiting reply",
+    "answered": "Answered",
+    "reply": "New"
+  },
+  "profile": {
+    "title": "Profile",
+    "contactInfo": "Contact Information",
+    "changePassword": "Change Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "passwordChanged": "Password changed!",
+    "deleteAccount": "Delete Account",
+    "deleteWarning": "This will send a deletion request to the organizer. Your data will be removed after confirmation.",
+    "requestDeletion": "Request Account Deletion",
+    "deletionSent": "Deletion request sent. We will contact you shortly."
   },
   "documents": {
     "title": "Documents",

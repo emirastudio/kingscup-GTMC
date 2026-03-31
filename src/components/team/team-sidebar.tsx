@@ -15,6 +15,7 @@ import {
   UserPlus,
   Shirt,
   FileText,
+  UserCircle,
 } from "lucide-react";
 
 type NavGroup = {
@@ -58,6 +59,7 @@ export function TeamSidebar({ className, inboxCount }: TeamSidebarProps) {
       items: [
         { key: "jersey", icon: Shirt, href: "/team/jersey" },
         { key: "documents", icon: FileText, href: "/team/documents" },
+        { key: "profile", icon: UserCircle, href: "/team/profile" },
       ],
     },
   ];

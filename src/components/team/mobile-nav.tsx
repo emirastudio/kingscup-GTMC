@@ -6,7 +6,7 @@ import { usePathname, Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Menu, X,
-  Mail, Shield, UserPlus, Plane, Shirt, FileText,
+  Mail, Shield, UserPlus, Plane, Shirt, FileText, UserCircle,
 } from "lucide-react";
 
 interface MobileNavProps {
@@ -28,12 +28,13 @@ export function MobileNav({ inboxCount }: MobileNavProps) {
 
   // "More" drawer — everything else
   const moreItems = [
-    { key: "inbox",        icon: Mail,     href: "/team/inbox",        badge: inboxCount },
-    { key: "staff",        icon: Shield,   href: "/team/staff" },
-    { key: "accompanying", icon: UserPlus, href: "/team/accompanying" },
-    { key: "travel",       icon: Plane,    href: "/team/travel" },
-    { key: "jersey",       icon: Shirt,    href: "/team/jersey" },
-    { key: "documents",    icon: FileText, href: "/team/documents" },
+    { key: "inbox",        icon: Mail,       href: "/team/inbox",    badge: inboxCount },
+    { key: "staff",        icon: Shield,     href: "/team/staff" },
+    { key: "accompanying", icon: UserPlus,   href: "/team/accompanying" },
+    { key: "travel",       icon: Plane,      href: "/team/travel" },
+    { key: "jersey",       icon: Shirt,      href: "/team/jersey" },
+    { key: "documents",    icon: FileText,   href: "/team/documents" },
+    { key: "profile",      icon: UserCircle, href: "/team/profile" },
   ];
 
   return (

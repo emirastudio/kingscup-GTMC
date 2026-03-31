@@ -323,6 +323,7 @@ export const inboxMessages = pgTable("inbox_messages", {
   body: text("body").notNull(),
   sentAt: timestamp("sent_at").defaultNow().notNull(),
   sentBy: integer("sent_by").notNull(),
+  sendToAll: boolean("send_to_all").default(true).notNull(),
 });
 
 export const teamMessageReads = pgTable("team_message_reads", {
@@ -334,6 +335,27 @@ export const teamMessageReads = pgTable("team_message_reads", {
     .references(() => teams.id, { onDelete: "cascade" })
     .notNull(),
   readAt: timestamp("read_at").defaultNow().notNull(),
+});
+
+// Message recipients (for targeted sends — specific teams)
+export const messageRecipients = pgTable("message_recipients", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => inboxMessages.id, { onDelete: "cascade" }),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+});
+
+// Questions from teams to admin
+export const teamQuestions = pgTable("team_questions", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  tournamentId: integer("tournament_id").notNull().references(() => tournaments.id, { onDelete: "cascade" }),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  replyBody: text("reply_body"),
+  repliedAt: timestamp("replied_at"),
+  repliedBy: integer("replied_by"),
+  isRead: boolean("is_read").default(false).notNull(),
 });
 
 // ─── Tournament Documents (admin uploads, visible to all teams) ─

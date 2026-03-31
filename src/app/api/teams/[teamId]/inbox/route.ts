@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { inboxMessages, teamMessageReads, teams } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { inboxMessages, teamMessageReads, messageRecipients, teams } from "@/db/schema";
+import { eq, and, desc, or, sql } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 
 export async function GET(
@@ -22,11 +22,30 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Get all messages for this tournament
-  const messages = await db.query.inboxMessages.findMany({
-    where: eq(inboxMessages.tournamentId, team.tournamentId),
-    orderBy: (m, { desc }) => [desc(m.sentAt)],
-  });
+  // Get all messages for this tournament that are either sendToAll or have this team as recipient
+  const messages = await db
+    .select({
+      id: inboxMessages.id,
+      subject: inboxMessages.subject,
+      body: inboxMessages.body,
+      sentAt: inboxMessages.sentAt,
+      sendToAll: inboxMessages.sendToAll,
+    })
+    .from(inboxMessages)
+    .where(
+      and(
+        eq(inboxMessages.tournamentId, team.tournamentId),
+        or(
+          eq(inboxMessages.sendToAll, true),
+          sql`EXISTS (
+            SELECT 1 FROM ${messageRecipients}
+            WHERE ${messageRecipients.messageId} = ${inboxMessages.id}
+            AND ${messageRecipients.teamId} = ${tid}
+          )`
+        )
+      )
+    )
+    .orderBy(desc(inboxMessages.sentAt));
 
   // Get read status for this team
   const reads = await db.query.teamMessageReads.findMany({

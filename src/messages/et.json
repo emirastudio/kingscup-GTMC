@@ -51,7 +51,10 @@
     "messages": "Sõnumid",
     "settings": "Seaded",
     "tournaments": "Turniirid",
-    "payments": "Maksed"
+    "payments": "Maksed",
+    "services": "Teenused",
+    "packages": "Paketid",
+    "profile": "Profiil"
   },
   "team": {
     "regNumber": "Registreerimisnumber",
@@ -212,8 +215,31 @@
   },
   "inbox": {
     "title": "Postkast",
-    "description": "Kõik teie meeskonnale saadetud sõnumid",
-    "noMessages": "Sõnumeid pole veel"
+    "description": "Korraldaja sõnumid ja teie küsimused",
+    "noMessages": "Sõnumeid pole veel",
+    "messagesTab": "Sõnumid",
+    "questionsTab": "Meie küsimused",
+    "askQuestion": "Esita küsimus",
+    "questionSubject": "Teema",
+    "questionBody": "Teie küsimus",
+    "questionSent": "Küsimus saadetud!",
+    "noQuestions": "Küsimusi pole veel",
+    "pending": "Ootab vastust",
+    "answered": "Vastatud",
+    "reply": "Uus"
+  },
+  "profile": {
+    "title": "Profiil",
+    "contactInfo": "Kontaktandmed",
+    "changePassword": "Muuda parooli",
+    "currentPassword": "Praegune parool",
+    "newPassword": "Uus parool",
+    "confirmPassword": "Kinnita uus parool",
+    "passwordChanged": "Parool muudetud!",
+    "deleteAccount": "Kustuta konto",
+    "deleteWarning": "See saadab kustutamistaotluse korraldajale. Teie andmed eemaldatakse pärast kinnitamist.",
+    "requestDeletion": "Taotle konto kustutamist",
+    "deletionSent": "Kustutamistaotlus saadetud. Võtame teiega peatselt ühendust."
   },
   "documents": {
     "title": "Dokumendid",
