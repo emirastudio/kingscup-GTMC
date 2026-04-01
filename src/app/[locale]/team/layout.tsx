@@ -4,6 +4,7 @@ import { MobileNav } from "@/components/team/mobile-nav";
 import { TeamSwitcher } from "@/components/club/team-switcher";
 import { TeamProvider } from "@/lib/team-context";
 import { SiteFooter } from "@/components/ui/site-footer";
+import { ImpersonationBanner } from "@/components/team/impersonation-banner";
 import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { clubs, teams, people, tournamentClasses, inboxMessages, teamMessageReads, messageRecipients, tournaments } from "@/db/schema";
@@ -69,6 +70,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
 
   // Тренер команды видит только свою команду
   const isTeamManager = !!session.teamId;
+  const isImpersonating = !!session.impersonating;
   const activeTeam = isTeamManager
     ? enrichedTeams.find((t) => t.id === session.teamId) ?? enrichedTeams[0]
     : enrichedTeams[0];
@@ -109,6 +111,7 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
       isTeamManager={isTeamManager}
     >
       <div className="flex flex-col min-h-screen">
+        {isImpersonating && <ImpersonationBanner clubName={club.name} />}
         <TeamHeader
           teamName={activeTeam?.name}
           regNumber={activeTeam?.regNumber}

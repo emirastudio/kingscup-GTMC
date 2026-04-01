@@ -13,7 +13,7 @@ import {
   ArrowLeft, Users, Check, Copy, MessageSquare, Plus, Trash2,
   AlertTriangle, Plane, Train, Bus, Car, Hotel, Utensils,
   Calendar, ExternalLink, ChevronDown, ChevronUp, Eye, EyeOff,
-  Phone, Mail, MapPin, Clock, FileText, CreditCard, UserCheck,
+  Phone, Mail, MapPin, Clock, FileText, CreditCard, UserCheck, LogIn,
 } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -754,6 +754,7 @@ export default function AdminTeamDetailPage() {
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -880,6 +881,23 @@ export default function AdminTeamDetailPage() {
         setTimeout(() => setCopied(false), 2500);
       }
     } catch { /* silent */ }
+  }
+
+  async function handleLoginAs() {
+    if (!report?.club) return;
+    setLoggingIn(true);
+    try {
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clubId: report.club.id }),
+      });
+      if (res.ok) {
+        router.push(`/${locale}/team/overview`);
+      }
+    } finally {
+      setLoggingIn(false);
+    }
   }
 
   async function handleDeleteTeam() {
@@ -1019,6 +1037,17 @@ export default function AdminTeamDetailPage() {
             <Button variant="secondary" size="sm" onClick={handleCopyInvite} disabled={!club}>
               {copied ? <><Check className="w-4 h-4 text-success" /><span className="text-success">Copied!</span></>
                 : <><Copy className="w-4 h-4" />Login link</>}
+            </Button>
+
+            {/* Login as club */}
+            <Button
+              size="sm"
+              onClick={handleLoginAs}
+              disabled={!club || loggingIn}
+              className="bg-amber-500 hover:bg-amber-600 text-white border-0"
+            >
+              <LogIn className="w-4 h-4" />
+              {loggingIn ? "..." : "Login as"}
             </Button>
 
             {/* Send message */}

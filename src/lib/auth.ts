@@ -11,7 +11,10 @@ export type TokenPayload = {
   clubId?: number;
   tournamentId?: number;
   teamId?: number; // если задан — пользователь является тренером конкретной команды
+  impersonating?: true; // admin просматривает аккаунт клуба
 };
+
+export const ADMIN_BACKUP_COOKIE = "kingscup_admin_backup";
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 12);
